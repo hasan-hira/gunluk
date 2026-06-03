@@ -8,7 +8,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Günlük Takip" />
   <title>Günlük Takip</title>
-
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
@@ -516,11 +515,11 @@
         <div class="card">
           <h2>Kaynaklar</h2>
           <div class="task-list">
-            <div class="task-item"><div class="task-title">A1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a></div></div>
-            <div class="task-item"><div class="task-title">A2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">Aç</a></div></div>
+            <div class="task-item"><div class="task-title">A1</div></div>
+            <div class="task-item"><div class="task-title">A2</div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 1</div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 2</div></div>
+            <div class="task-item"><div class="task-title">B2</div></div>
           </div>
         </div>
       </div>
@@ -578,39 +577,31 @@
 
   <div class="footer-tools">
     <button class="safe-toggle" id="reportToggleBtn">Rapor Gönder</button>
-
     <div class="report-panel" id="reportPanel">
       <div class="form-row">
         <label for="confirmText"><strong>Onay</strong></label>
         <input id="confirmText" class="input" type="text" placeholder='Göndermek için "EVET" yaz' />
       </div>
-
       <button class="btn primary small" id="sendReportBtn">Günlük raporu gönder</button>
       <div class="tiny-note" id="reportStatus"></div>
     </div>
   </div>
 
   <script>
-    emailjs.init({
-      publicKey: "fD5cr29ZVYp51xJ2T"
-    });
+    emailjs.init({ publicKey: "fD5cr29ZVYp51xJ2T" });
 
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_sort_v1",
-      completions: "gunluk_takip_completions_sort_v1",
-      notes: "gunluk_takip_notes_sort_v1",
-      ui: "gunluk_takip_ui_sort_v1",
-      manualTasks: "gunluk_takip_manual_tasks_sort_v1",
-      recurringTasks: "gunluk_takip_recurring_tasks_sort_v1"
+      settings: "gunluk_takip_settings_sort_final",
+      completions: "gunluk_takip_completions_sort_final",
+      notes: "gunluk_takip_notes_sort_final",
+      ui: "gunluk_takip_ui_sort_final",
+      manualTasks: "gunluk_takip_manual_tasks_sort_final",
+      recurringTasks: "gunluk_takip_recurring_tasks_sort_final"
     };
 
-    const DEFAULT_SETTINGS = {
-      userName: "",
-      b2Frequency: 1
-    };
-
+    const DEFAULT_SETTINGS = { userName: "", b2Frequency: 1 };
     const APP_START = "2025-01-01";
 
     const LINKS = {
@@ -629,17 +620,8 @@
     ];
 
     const B2_PARTS = [
-      "B2 / 1-10. sayfa",
-      "B2 / 11-20. sayfa",
-      "B2 / 21-30. sayfa",
-      "B2 / 31-40. sayfa",
-      "B2 / 41-50. sayfa",
-      "B2 / 51-60. sayfa",
-      "B2 / 61-70. sayfa",
-      "B2 / 71-80. sayfa",
-      "B2 / 81-90. sayfa",
-      "B2 / 91-100. sayfa",
-      "B2 / 101-105. sayfa"
+      "B2 / 1-10. sayfa","B2 / 11-20. sayfa","B2 / 21-30. sayfa","B2 / 31-40. sayfa","B2 / 41-50. sayfa",
+      "B2 / 51-60. sayfa","B2 / 61-70. sayfa","B2 / 71-80. sayfa","B2 / 81-90. sayfa","B2 / 91-100. sayfa","B2 / 101-105. sayfa"
     ];
 
     const state = {
@@ -652,288 +634,204 @@
       recurringTasks: loadJSON(STORAGE_KEYS.recurringTasks, [])
     };
 
-    function todayISO() {
-      return new Date().toISOString().slice(0,10);
+    function todayISO(){ return new Date().toISOString().slice(0,10); }
+    function loadJSON(key, fallback){ try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw):fallback; }catch{return fallback;} }
+    function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+    function parseLocalDate(iso){ const [y,m,d]=iso.split("-").map(Number); return new Date(y,m-1,d); }
+    function addDays(iso,count){ const dt=parseLocalDate(iso); dt.setDate(dt.getDate()+count); return dt.toISOString().slice(0,10); }
+    function formatDateTR(iso){ return parseLocalDate(iso).toLocaleDateString("tr-TR",{weekday:"long",year:"numeric",month:"long",day:"2-digit"}); }
+    function getWeekStart(iso){ const dt=parseLocalDate(iso); const day=dt.getDay()===0?7:dt.getDay(); dt.setDate(dt.getDate()-(day-1)); return dt.toISOString().slice(0,10); }
+    function esc(text){ return String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
+    function isTaskDone(taskId,dateISO){ return !!state.completions[dateISO]?.[taskId]; }
+    function setTaskDone(taskId,dateISO,done){ if(!state.completions[dateISO]) state.completions[dateISO]={}; state.completions[dateISO][taskId]=done; saveJSON(STORAGE_KEYS.completions,state.completions); }
+
+    function getManualTasks(dateISO){
+      return (state.manualTasks[dateISO]||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
     }
 
-    function loadJSON(key, fallback) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch {
-        return fallback;
-      }
+    function getRecurringTasks(){
+      return (state.recurringTasks||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
     }
 
-    function saveJSON(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+    function addTask(title,type,dateISO,linkValue){
+      const trimmed=title.trim();
+      const link=(linkValue||"").trim();
+      if(!trimmed) return;
 
-    function parseLocalDate(iso) {
-      const [y,m,d] = iso.split("-").map(Number);
-      return new Date(y, m - 1, d);
-    }
-
-    function addDays(iso, count) {
-      const dt = parseLocalDate(iso);
-      dt.setDate(dt.getDate() + count);
-      return dt.toISOString().slice(0,10);
-    }
-
-    function formatDateTR(iso) {
-      return parseLocalDate(iso).toLocaleDateString("tr-TR", {
-        weekday:"long",
-        year:"numeric",
-        month:"long",
-        day:"2-digit"
-      });
-    }
-
-    function getWeekStart(iso) {
-      const dt = parseLocalDate(iso);
-      const day = dt.getDay() === 0 ? 7 : dt.getDay();
-      dt.setDate(dt.getDate() - (day - 1));
-      return dt.toISOString().slice(0,10);
-    }
-
-    function esc(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-    }
-
-    function isTaskDone(taskId, dateISO) {
-      return !!state.completions[dateISO]?.[taskId];
-    }
-
-    function setTaskDone(taskId, dateISO, done) {
-      if (!state.completions[dateISO]) state.completions[dateISO] = {};
-      state.completions[dateISO][taskId] = done;
-      saveJSON(STORAGE_KEYS.completions, state.completions);
-    }
-
-    function getManualTasks(dateISO) {
-      return (state.manualTasks[dateISO] || []).slice().sort((a,b) => (a.order || 0) - (b.order || 0));
-    }
-
-    function getRecurringTasks() {
-      return (state.recurringTasks || []).slice().sort((a,b) => (a.order || 0) - (b.order || 0));
-    }
-
-    function addTask(title, type, dateISO, linkValue) {
-      const trimmed = title.trim();
-      const link = (linkValue || "").trim();
-      if (!trimmed) return;
-
-      if (type === "daily") {
-        const maxOrder = state.recurringTasks.length
-          ? Math.max(...state.recurringTasks.map(t => t.order || 0))
-          : 0;
-
+      if(type==="daily"){
+        const maxOrder=state.recurringTasks.length?Math.max(...state.recurringTasks.map(t=>t.order||0)):0;
         state.recurringTasks.push({
-          id: "recurring-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
-          title: trimmed,
-          type: "manual-recurring",
-          description: "",
-          badges: ["Her gün"],
+          id:"recurring-"+Date.now()+"-"+Math.floor(Math.random()*10000),
+          title:trimmed,
+          type:"manual-recurring",
+          description:"",
+          badges:["Her gün"],
           link,
-          order: maxOrder + 1
+          order:maxOrder+1
         });
-        saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
-      } else {
-        if (!state.manualTasks[dateISO]) state.manualTasks[dateISO] = [];
-        const maxOrder = state.manualTasks[dateISO].length
-          ? Math.max(...state.manualTasks[dateISO].map(t => t.order || 0))
-          : 0;
-
+        saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
+      }else{
+        if(!state.manualTasks[dateISO]) state.manualTasks[dateISO]=[];
+        const maxOrder=state.manualTasks[dateISO].length?Math.max(...state.manualTasks[dateISO].map(t=>t.order||0)):0;
         state.manualTasks[dateISO].push({
-          id: "manual-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
-          title: trimmed,
-          type: "manual",
-          description: "",
-          badges: ["Tek gün"],
+          id:"manual-"+Date.now()+"-"+Math.floor(Math.random()*10000),
+          title:trimmed,
+          type:"manual",
+          description:"",
+          badges:["Tek gün"],
           link,
-          order: maxOrder + 1
+          order:maxOrder+1
         });
-        saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+        saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
       }
     }
 
-    function deleteManualTask(dateISO, taskId) {
-      const arr = state.manualTasks[dateISO] || [];
-      state.manualTasks[dateISO] = arr.filter(t => t.id !== taskId);
-      if (state.completions[dateISO] && state.completions[dateISO][taskId]) {
+    function moveManualTask(dateISO,taskId,direction){
+      const sorted=getManualTasks(dateISO);
+      const index=sorted.findIndex(t=>t.id===taskId);
+      if(index===-1) return;
+      const targetIndex=direction==="up"?index-1:index+1;
+      if(targetIndex<0||targetIndex>=sorted.length) return;
+      const current=sorted[index];
+      const target=sorted[targetIndex];
+      const tmp=current.order;
+      current.order=target.order;
+      target.order=tmp;
+      state.manualTasks[dateISO]=sorted;
+      saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
+    }
+
+    function moveRecurringTask(taskId,direction){
+      const sorted=getRecurringTasks();
+      const index=sorted.findIndex(t=>t.id===taskId);
+      if(index===-1) return;
+      const targetIndex=direction==="up"?index-1:index+1;
+      if(targetIndex<0||targetIndex>=sorted.length) return;
+      const current=sorted[index];
+      const target=sorted[targetIndex];
+      const tmp=current.order;
+      current.order=target.order;
+      target.order=tmp;
+      state.recurringTasks=sorted;
+      saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
+    }
+
+    function deleteManualTask(dateISO,taskId){
+      const arr=state.manualTasks[dateISO]||[];
+      state.manualTasks[dateISO]=arr.filter(t=>t.id!==taskId);
+      if(state.completions[dateISO]&&state.completions[dateISO][taskId]){
         delete state.completions[dateISO][taskId];
-        saveJSON(STORAGE_KEYS.completions, state.completions);
+        saveJSON(STORAGE_KEYS.completions,state.completions);
       }
-      saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+      saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
     }
 
-    function deleteRecurringTask(taskId) {
-      state.recurringTasks = state.recurringTasks.filter(t => t.id !== taskId);
-      for (const date in state.completions) {
-        if (state.completions[date] && state.completions[date][taskId]) {
-          delete state.completions[date][taskId];
-        }
+    function deleteRecurringTask(taskId){
+      state.recurringTasks=state.recurringTasks.filter(t=>t.id!==taskId);
+      for(const date in state.completions){
+        if(state.completions[date]&&state.completions[date][taskId]) delete state.completions[date][taskId];
       }
-      saveJSON(STORAGE_KEYS.completions, state.completions);
-      saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
+      saveJSON(STORAGE_KEYS.completions,state.completions);
+      saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
     }
 
-    function moveManualTask(dateISO, taskId, direction) {
-      const arr = state.manualTasks[dateISO] || [];
-      const sorted = arr.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-      const index = sorted.findIndex(t => t.id === taskId);
-      if (index === -1) return;
-
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= sorted.length) return;
-
-      const current = sorted[index];
-      const target = sorted[targetIndex];
-
-      const temp = current.order || index;
-      current.order = target.order || targetIndex;
-      target.order = temp;
-
-      state.manualTasks[dateISO] = sorted;
-      saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
-    }
-
-    function moveRecurringTask(taskId, direction) {
-      const sorted = state.recurringTasks.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-      const index = sorted.findIndex(t => t.id === taskId);
-      if (index === -1) return;
-
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= sorted.length) return;
-
-      const current = sorted[index];
-      const target = sorted[targetIndex];
-
-      const temp = current.order || index;
-      current.order = target.order || targetIndex;
-      target.order = temp;
-
-      state.recurringTasks = sorted;
-      saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
-    }
-
-    function getDelftTaskForDate(dateISO) {
-      const weekStart = getWeekStart(dateISO);
-
-      const doneTodayId = Object.keys(state.completions[dateISO] || {}).find(taskId =>
-        taskId.startsWith("delft-") && state.completions[dateISO][taskId]
-      );
-
-      if (doneTodayId) {
-        const current = DELFT_SERIES.find(x => x.id === doneTodayId);
-        return { ...current, type:"listen", badges:["Delft", current.label] };
+    function getDelftTaskForDate(dateISO){
+      const weekStart=getWeekStart(dateISO);
+      const doneTodayId=Object.keys(state.completions[dateISO]||{}).find(taskId=>taskId.startsWith("delft-")&&state.completions[dateISO][taskId]);
+      if(doneTodayId){
+        const current=DELFT_SERIES.find(x=>x.id===doneTodayId);
+        return {...current,type:"listen",badges:["Delft",current.label]};
       }
 
-      const alreadyDoneEarlierThisWeek = Object.keys(state.completions).some(date => {
-        if (date === dateISO) return false;
-        if (getWeekStart(date) !== weekStart) return false;
-        const doneTasks = state.completions[date] || {};
-        return Object.keys(doneTasks).some(taskId => doneTasks[taskId] && taskId.startsWith("delft-"));
+      const alreadyDoneEarlierThisWeek=Object.keys(state.completions).some(date=>{
+        if(date===dateISO) return false;
+        if(getWeekStart(date)!==weekStart) return false;
+        const doneTasks=state.completions[date]||{};
+        return Object.keys(doneTasks).some(taskId=>doneTasks[taskId]&&taskId.startsWith("delft-"));
       });
 
-      if (alreadyDoneEarlierThisWeek) return null;
+      if(alreadyDoneEarlierThisWeek) return null;
 
-      let totalDone = 0;
-      for (const date in state.completions) {
-        for (const taskId in state.completions[date]) {
-          if (state.completions[date][taskId] && taskId.startsWith("delft-")) totalDone++;
+      let totalDone=0;
+      for(const date in state.completions){
+        for(const taskId in state.completions[date]){
+          if(state.completions[date][taskId]&&taskId.startsWith("delft-")) totalDone++;
         }
       }
 
-      const idx = totalDone % DELFT_SERIES.length;
-      const selected = DELFT_SERIES[idx];
-      return { ...selected, type:"listen", badges:["Delft", selected.label] };
+      const idx=totalDone%DELFT_SERIES.length;
+      const selected=DELFT_SERIES[idx];
+      return {...selected,type:"listen",badges:["Delft",selected.label]};
     }
 
-    function getWeeklyCarryTask(taskBaseId, title, link, desiredDateISO, weekdayIndex) {
-      const weekStart = getWeekStart(desiredDateISO);
-      const scheduled = addDays(weekStart, weekdayIndex - 1);
-      const doneToday = isTaskDone(taskBaseId, desiredDateISO);
+    function getWeeklyCarryTask(taskBaseId,title,link,desiredDateISO,weekdayIndex){
+      const weekStart=getWeekStart(desiredDateISO);
+      const scheduled=addDays(weekStart,weekdayIndex-1);
+      const doneToday=isTaskDone(taskBaseId,desiredDateISO);
+      if(desiredDateISO<scheduled) return null;
 
-      if (desiredDateISO < scheduled) return null;
-
-      const alreadyDoneEarlierThisWeek = Object.keys(state.completions).some(date => {
-        return (
-          date !== desiredDateISO &&
-          getWeekStart(date) === getWeekStart(desiredDateISO) &&
+      const alreadyDoneEarlierThisWeek=Object.keys(state.completions).some(date=>{
+        return date!==desiredDateISO &&
+          getWeekStart(date)===getWeekStart(desiredDateISO) &&
           state.completions[date] &&
-          state.completions[date][taskBaseId]
-        );
+          state.completions[date][taskBaseId];
       });
 
-      if (alreadyDoneEarlierThisWeek) return null;
+      if(alreadyDoneEarlierThisWeek) return null;
 
       return {
-        id: taskBaseId,
-        type: "weekly",
+        id:taskBaseId,
+        type:"weekly",
         title,
-        description: "Tekrarlamalı",
+        description:"Tekrarlamalı",
         link,
-        overdue: desiredDateISO > scheduled && !doneToday,
-        badges: ["Haftalık"]
+        overdue:desiredDateISO>scheduled && !doneToday,
+        badges:["Haftalık"]
       };
     }
 
-    function getB2CompletedEntries() {
-      const completedEntries = [];
-      for (const date in state.completions) {
-        for (const taskId in state.completions[date]) {
-          if (state.completions[date][taskId] && taskId.startsWith("b2-part-")) {
-            completedEntries.push({ date, taskId });
+    function getB2CompletedEntries(){
+      const completedEntries=[];
+      for(const date in state.completions){
+        for(const taskId in state.completions[date]){
+          if(state.completions[date][taskId]&&taskId.startsWith("b2-part-")){
+            completedEntries.push({date,taskId});
           }
         }
       }
-      completedEntries.sort((a, b) => a.date.localeCompare(b.date));
+      completedEntries.sort((a,b)=>a.date.localeCompare(b.date));
       return completedEntries;
     }
 
-    function getB2TaskForDate(dateISO) {
-      const freq = Number(state.settings.b2Frequency || 1);
-      const completedEntries = getB2CompletedEntries();
+    function getB2TaskForDate(dateISO){
+      const freq=Number(state.settings.b2Frequency||1);
+      const completedEntries=getB2CompletedEntries();
 
-      const todayDone = completedEntries.find(x => x.date === dateISO);
-      if (todayDone) {
-        const idx = Number(todayDone.taskId.replace("b2-part-",""));
-        return {
-          id: "b2-part-" + idx,
-          type: "daily",
-          title: B2_PARTS[idx],
-          description: "Sıradaki parça",
-          link: LINKS.b2,
-          overdue: false,
-          badges: ["B2"]
-        };
+      const todayDone=completedEntries.find(x=>x.date===dateISO);
+      if(todayDone){
+        const idx=Number(todayDone.taskId.replace("b2-part-",""));
+        return { id:"b2-part-"+idx, type:"daily", title:B2_PARTS[idx], description:"Sıradaki parça", link:LINKS.b2, overdue:false, badges:["B2"] };
       }
 
-      const completedCount = completedEntries.length;
-      const currentIndex = Math.min(completedCount, B2_PARTS.length - 1);
-      const availableDate = addDays(APP_START, completedCount * freq);
-
-      if (dateISO < availableDate) return null;
+      const completedCount=completedEntries.length;
+      const currentIndex=Math.min(completedCount,B2_PARTS.length-1);
+      const availableDate=addDays(APP_START,completedCount*freq);
+      if(dateISO<availableDate) return null;
 
       return {
-        id: "b2-part-" + currentIndex,
-        type: "daily",
-        title: B2_PARTS[currentIndex],
-        description: "Sıradaki parça",
-        link: LINKS.b2,
-        overdue: dateISO > availableDate,
-        badges: ["B2"]
+        id:"b2-part-"+currentIndex,
+        type:"daily",
+        title:B2_PARTS[currentIndex],
+        description:"Sıradaki parça",
+        link:LINKS.b2,
+        overdue:dateISO>availableDate,
+        badges:["B2"]
       };
     }
 
-    function getRoutineTasksForDate(dateISO) {
-      const tasks = [];
-      const day = parseLocalDate(dateISO).getDay();
+    function getRoutineTasksForDate(dateISO){
+      const tasks=[];
+      const day=parseLocalDate(dateISO).getDay();
 
       tasks.push(
         { id:"routine-walk", type:"daily", title:"Fullbody yada yürüyüşe çık", description:"", badges:["Günlük","Rutin"] },
@@ -943,93 +841,80 @@
         { id:"routine-call-message", type:"daily", title:"Birini ara veya mesaj at", description:"", badges:["Günlük","Rutin"] },
         { id:"routine-zikir", type:"daily", title:"Günlük zikirler", description:"", badges:["Günlük","Rutin"] },
         { id:"routine-kuran", type:"daily", title:"Kuran oku", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-instagram", type:"daily", title:"Instagram", description:"", badges:["Günlük","Rutin"], link: LINKS.instagramDaily }
+        { id:"routine-instagram", type:"daily", title:"Instagram", description:"", badges:["Günlük","Rutin"], link:LINKS.instagramDaily }
       );
 
-      if (day === 5 || day === 6 || day === 0) {
-        tasks.push({
-          id:"routine-instagram-repeat",
-          type:"daily",
-          title:"Instagram tekrar",
-          description:"",
-          badges:["Hafta sonu"]
-        });
+      if(day===5||day===6||day===0){
+        tasks.push({ id:"routine-instagram-repeat", type:"daily", title:"Instagram tekrar", description:"", badges:["Hafta sonu"] });
       }
 
       return tasks;
     }
 
-    function getAutoTasksForDate(dateISO) {
-      const tasks = [];
-
+    function getAutoTasksForDate(dateISO){
+      const tasks=[];
       tasks.push(...getRoutineTasksForDate(dateISO));
 
-      const a1 = getWeeklyCarryTask("weekly-a1", "A1 haftalık tekrar", LINKS.a1, dateISO, 1);
-      if (a1) tasks.push(a1);
+      const a1=getWeeklyCarryTask("weekly-a1","A1 haftalık tekrar",LINKS.a1,dateISO,1);
+      if(a1) tasks.push(a1);
 
-      const a2 = getWeeklyCarryTask("weekly-a2", "A2 haftalık tekrar", LINKS.a2, dateISO, 4);
-      if (a2) tasks.push(a2);
+      const a2=getWeeklyCarryTask("weekly-a2","A2 haftalık tekrar",LINKS.a2,dateISO,4);
+      if(a2) tasks.push(a2);
 
-      const b1d1 = getWeeklyCarryTask("weekly-b1-deel1", "B1 Deel 1 tekrar", LINKS.b1d1, dateISO, 2);
-      if (b1d1) tasks.push(b1d1);
+      const b1d1=getWeeklyCarryTask("weekly-b1-deel1","B1 Deel 1 tekrar",LINKS.b1d1,dateISO,2);
+      if(b1d1) tasks.push(b1d1);
 
-      const b1d2 = getWeeklyCarryTask("weekly-b1-deel2", "B1 Deel 2 tekrar", LINKS.b1d2, dateISO, 5);
-      if (b1d2) tasks.push(b1d2);
+      const b1d2=getWeeklyCarryTask("weekly-b1-deel2","B1 Deel 2 tekrar",LINKS.b1d2,dateISO,5);
+      if(b1d2) tasks.push(b1d2);
 
-      const b2 = getB2TaskForDate(dateISO);
-      if (b2) tasks.push(b2);
+      const b2=getB2TaskForDate(dateISO);
+      if(b2) tasks.push(b2);
 
-      const delft = getDelftTaskForDate(dateISO);
-      if (delft) tasks.push(delft);
+      const delft=getDelftTaskForDate(dateISO);
+      if(delft) tasks.push(delft);
 
       return tasks;
     }
 
-    function getTasksForDate(dateISO) {
-      return [
-        ...getManualTasks(dateISO),
-        ...getRecurringTasks(),
-        ...getAutoTasksForDate(dateISO)
-      ];
+    function getTasksForDate(dateISO){
+      return [...getManualTasks(dateISO), ...getRecurringTasks(), ...getAutoTasksForDate(dateISO)];
     }
 
-    function renderBadges(task) {
-      let html = "";
-      if (task.type === "manual") html += `<span class="badge manual">Kişisel</span>`;
-      if (task.type === "manual-recurring") html += `<span class="badge recurring">Her gün</span>`;
-      (task.badges || []).forEach(b => html += `<span class="badge">${esc(b)}</span>`);
-      if (task.overdue) html += `<span class="badge overdue">Gecikmiş</span>`;
+    function renderBadges(task){
+      let html="";
+      if(task.type==="manual") html+=`<span class="badge manual">Kişisel</span>`;
+      if(task.type==="manual-recurring") html+=`<span class="badge recurring">Her gün</span>`;
+      (task.badges||[]).forEach(b=>html+=`<span class="badge">${esc(b)}</span>`);
+      if(task.overdue) html+=`<span class="badge overdue">Gecikmiş</span>`;
       return html;
     }
 
-    function renderTaskList(containerId, tasks, dateISO, allowDelete = false) {
-      const el = document.getElementById(containerId);
-
-      if (!tasks.length) {
-        el.innerHTML = `<div class="task-item"><div class="task-desc">Görev yok</div></div>`;
+    function renderTaskList(containerId,tasks,dateISO,allowDelete=false){
+      const el=document.getElementById(containerId);
+      if(!tasks.length){
+        el.innerHTML=`<div class="task-item"><div class="task-desc">Görev yok</div></div>`;
         return;
       }
 
-      el.innerHTML = tasks.map(task => {
-        const done = isTaskDone(task.id, dateISO);
+      el.innerHTML=tasks.map(task=>{
+        const done=isTaskDone(task.id,dateISO);
+        let deleteButton="";
+        let moveButtons="";
 
-        let deleteButton = "";
-        let moveButtons = "";
-
-        if (allowDelete && task.type === "manual") {
-          moveButtons = `
+        if(allowDelete && task.type==="manual"){
+          moveButtons=`
             <button class="btn icon move-up-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↑</button>
             <button class="btn icon move-down-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↓</button>
           `;
-          deleteButton = `<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>`;
+          deleteButton=`<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>`;
         }
 
-        if (allowDelete && task.type === "manual-recurring") {
-          moveButtons = `
+        if(allowDelete && task.type==="manual-recurring"){
+          moveButtons=`
             <button class="btn icon move-up-recurring-btn" data-task-id="${esc(task.id)}">↑</button>
             <button class="btn icon move-down-recurring-btn" data-task-id="${esc(task.id)}">↓</button>
           `;
-          deleteButton = `<button class="btn small danger-btn delete-recurring-btn" data-task-id="${esc(task.id)}">Sil</button>`;
+          deleteButton=`<button class="btn small danger-btn delete-recurring-btn" data-task-id="${esc(task.id)}">Sil</button>`;
         }
 
         return `
@@ -1043,7 +928,6 @@
                   <div class="badge-row">${renderBadges(task)}</div>
                 </div>
               </div>
-
               <div class="task-actions">
                 ${task.link ? `<a class="link-btn" target="_blank" href="${esc(task.link)}">Kaynağı Aç</a>` : ""}
                 ${moveButtons}
@@ -1054,129 +938,122 @@
         `;
       }).join("");
 
-      el.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener("change", e => {
-          setTaskDone(e.target.dataset.taskId, e.target.dataset.date, e.target.checked);
+      el.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        cb.addEventListener("change",e=>{
+          setTaskDone(e.target.dataset.taskId,e.target.dataset.date,e.target.checked);
           renderAll();
         });
       });
 
-      el.querySelectorAll(".delete-manual-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-          deleteManualTask(e.target.dataset.date, e.target.dataset.taskId);
+      el.querySelectorAll(".delete-manual-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
+          deleteManualTask(e.target.dataset.date,e.target.dataset.taskId);
           renderAll();
         });
       });
 
-      el.querySelectorAll(".delete-recurring-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
+      el.querySelectorAll(".delete-recurring-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
           deleteRecurringTask(e.target.dataset.taskId);
           renderAll();
         });
       });
 
-      el.querySelectorAll(".move-up-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-          moveManualTask(e.target.dataset.date, e.target.dataset.taskId, "up");
+      el.querySelectorAll(".move-up-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
+          moveManualTask(e.target.dataset.date,e.target.dataset.taskId,"up");
           renderAll();
         });
       });
 
-      el.querySelectorAll(".move-down-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-          moveManualTask(e.target.dataset.date, e.target.dataset.taskId, "down");
+      el.querySelectorAll(".move-down-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
+          moveManualTask(e.target.dataset.date,e.target.dataset.taskId,"down");
           renderAll();
         });
       });
 
-      el.querySelectorAll(".move-up-recurring-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-          moveRecurringTask(e.target.dataset.taskId, "up");
+      el.querySelectorAll(".move-up-recurring-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
+          moveRecurringTask(e.target.dataset.taskId,"up");
           renderAll();
         });
       });
 
-      el.querySelectorAll(".move-down-recurring-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-          moveRecurringTask(e.target.dataset.taskId, "down");
+      el.querySelectorAll(".move-down-recurring-btn").forEach(btn=>{
+        btn.addEventListener("click",e=>{
+          moveRecurringTask(e.target.dataset.taskId,"down");
           renderAll();
         });
       });
     }
 
-    function renderDaily() {
-      const dateISO = state.selectedDate;
-      document.getElementById("todayLabel").textContent = formatDateTR(dateISO);
+    function renderDaily(){
+      const dateISO=state.selectedDate;
+      document.getElementById("todayLabel").textContent=formatDateTR(dateISO);
+      const tasks=getTasksForDate(dateISO);
+      renderTaskList("dailyTaskList",tasks,dateISO,true);
 
-      const tasks = getTasksForDate(dateISO);
-      renderTaskList("dailyTaskList", tasks, dateISO, true);
+      const total=tasks.length;
+      const done=tasks.filter(t=>isTaskDone(t.id,dateISO)).length;
 
-      const total = tasks.length;
-      const done = tasks.filter(t => isTaskDone(t.id, dateISO)).length;
-
-      document.getElementById("statTotal").textContent = total;
-      document.getElementById("statDone").textContent = done;
-      document.getElementById("statLeft").textContent = total - done;
-
-      document.getElementById("dailyNote").value = state.notes[dateISO] || "";
+      document.getElementById("statTotal").textContent=total;
+      document.getElementById("statDone").textContent=done;
+      document.getElementById("statLeft").textContent=total-done;
+      document.getElementById("dailyNote").value=state.notes[dateISO]||"";
     }
 
-    function renderWeekly() {
-      const weekStart = getWeekStart(state.selectedDate);
-      const grid = document.getElementById("weeklyGrid");
+    function renderWeekly(){
+      const weekStart=getWeekStart(state.selectedDate);
+      const grid=document.getElementById("weeklyGrid");
+      let html="";
 
-      let html = "";
-      for (let i = 0; i < 7; i++) {
-        const d = addDays(weekStart, i);
-        const tasks = getTasksForDate(d);
-
-        html += `
-          <div class="week-day ${d === todayISO() ? "today" : ""}">
-            <h4>${parseLocalDate(d).toLocaleDateString("tr-TR", { weekday:"short", day:"2-digit", month:"2-digit" })}</h4>
-            ${
-              tasks.length
-                ? tasks.map(task => `<div class="mini-task ${isTaskDone(task.id, d) ? "done" : ""}">${esc(task.title)}</div>`).join("")
-                : `<div class="mini-task">Görev yok</div>`
-            }
+      for(let i=0;i<7;i++){
+        const d=addDays(weekStart,i);
+        const tasks=getTasksForDate(d);
+        html+=`
+          <div class="week-day ${d===todayISO() ? "today" : ""}">
+            <h4>${parseLocalDate(d).toLocaleDateString("tr-TR",{weekday:"short",day:"2-digit",month:"2-digit"})}</h4>
+            ${tasks.length ? tasks.map(task=>`<div class="mini-task ${isTaskDone(task.id,d) ? "done" : ""}">${esc(task.title)}</div>`).join("") : `<div class="mini-task">Görev yok</div>`}
           </div>
         `;
       }
 
-      grid.innerHTML = html;
+      grid.innerHTML=html;
     }
 
-    function renderWordView() {
-      const dateISO = state.selectedDate;
-      const tasks = getAutoTasksForDate(dateISO).filter(t =>
+    function renderWordView(){
+      const dateISO=state.selectedDate;
+      const tasks=getAutoTasksForDate(dateISO).filter(t =>
         t.id.startsWith("weekly-a1") ||
         t.id.startsWith("weekly-a2") ||
         t.id.startsWith("weekly-b1-deel1") ||
         t.id.startsWith("weekly-b1-deel2") ||
         t.id.startsWith("b2-part-")
       );
-      renderTaskList("wordTaskList", tasks, dateISO, false);
+      renderTaskList("wordTaskList",tasks,dateISO,false);
     }
 
-    function renderListeningView() {
-      const task = getDelftTaskForDate(state.selectedDate);
-      renderTaskList("listeningTaskList", task ? [task] : [], state.selectedDate, false);
+    function renderListeningView(){
+      const task=getDelftTaskForDate(state.selectedDate);
+      renderTaskList("listeningTaskList",task?[task]:[],state.selectedDate,false);
     }
 
-    function renderSettings() {
-      document.getElementById("userName").value = state.settings.userName || "";
-      document.getElementById("b2Frequency").value = String(state.settings.b2Frequency || 1);
+    function renderSettings(){
+      document.getElementById("userName").value=state.settings.userName||"";
+      document.getElementById("b2Frequency").value=String(state.settings.b2Frequency||1);
     }
 
-    function renderTabs() {
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.toggle("active", tab.dataset.view === state.ui.activeView);
+    function renderTabs(){
+      document.querySelectorAll(".tab").forEach(tab=>{
+        tab.classList.toggle("active",tab.dataset.view===state.ui.activeView);
       });
-      document.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
-      document.getElementById("view-" + state.ui.activeView).classList.add("active");
+      document.querySelectorAll(".view").forEach(view=>view.classList.remove("active"));
+      document.getElementById("view-"+state.ui.activeView).classList.add("active");
     }
 
-    function renderAll() {
-      document.getElementById("selectedDate").value = state.selectedDate;
+    function renderAll(){
+      document.getElementById("selectedDate").value=state.selectedDate;
       renderTabs();
       renderDaily();
       renderWeekly();
@@ -1185,144 +1062,121 @@
       renderSettings();
     }
 
-    function buildReportText(dateISO) {
-      const tasks = getTasksForDate(dateISO);
-      const done = tasks.filter(t => isTaskDone(t.id, dateISO));
-      const notDone = tasks.filter(t => !isTaskDone(t.id, dateISO));
-      const note = state.notes[dateISO] || "-";
+    async function sendReport(){
+      const status=document.getElementById("reportStatus");
+      const confirmText=document.getElementById("confirmText").value.trim();
 
-      return [
-        `Tarih: ${formatDateTR(dateISO)}`,
-        `Ad: ${state.settings.userName || "-"}`,
-        "",
-        "Tamamlanan görevler:",
-        ...(done.length ? done.map(t => `- ${t.title}`) : ["- Yok"]),
-        "",
-        "Eksik kalan görevler:",
-        ...(notDone.length ? notDone.map(t => `- ${t.title}`) : ["- Yok"]),
-        "",
-        "Not:",
-        note
-      ].join("\n");
-    }
-
-    async function sendReport() {
-      const status = document.getElementById("reportStatus");
-      const confirmText = document.getElementById("confirmText").value.trim();
-
-      if (confirmText !== "EVET") {
-        status.textContent = 'Göndermek için "EVET" yaz';
-        status.className = "tiny-note danger";
+      if(confirmText!=="EVET"){
+        status.textContent='Göndermek için "EVET" yaz';
+        status.className="tiny-note danger";
         return;
       }
 
-      if (!FIXED_REPORT_EMAIL || FIXED_REPORT_EMAIL.includes("REDACTED")) {
-        status.textContent = "Önce sabit mail adresini gir";
-        status.className = "tiny-note danger";
+      if(!FIXED_REPORT_EMAIL || FIXED_REPORT_EMAIL.includes("REDACTED")){
+        status.textContent="Önce sabit mail adresini gir";
+        status.className="tiny-note danger";
         return;
       }
 
-      try {
-        status.textContent = "Gönderiliyor...";
-        status.className = "tiny-note warn";
-
-        await emailjs.send("service_qv6p0ra", "template_k524mw5", {
+      try{
+        status.textContent="Gönderiliyor...";
+        status.className="tiny-note warn";
+        await emailjs.send("service_qv6p0ra","template_k524mw5",{
           to_email: FIXED_REPORT_EMAIL,
           user_name: state.settings.userName || "Kullanıcı",
           report_date: state.selectedDate,
-          message: buildReportText(state.selectedDate)
+          message: "Günlük rapor"
         });
-
-        status.textContent = "Rapor gönderildi";
-        status.className = "tiny-note ok";
-        document.getElementById("confirmText").value = "";
-      } catch (err) {
+        status.textContent="Rapor gönderildi";
+        status.className="tiny-note ok";
+        document.getElementById("confirmText").value="";
+      }catch(err){
         console.error(err);
-        status.textContent = "Mail gönderimi başarısız";
-        status.className = "tiny-note danger";
+        status.textContent="Mail gönderimi başarısız";
+        status.className="tiny-note danger";
       }
     }
 
-    document.getElementById("selectedDate").addEventListener("change", e => {
-      state.selectedDate = e.target.value;
+    document.getElementById("selectedDate").addEventListener("change",e=>{
+      state.selectedDate=e.target.value;
       renderAll();
     });
 
-    document.getElementById("todayBtn").addEventListener("click", () => {
-      state.selectedDate = todayISO();
+    document.getElementById("todayBtn").addEventListener("click",()=>{
+      state.selectedDate=todayISO();
       renderAll();
     });
 
-    document.getElementById("prevDayBtn").addEventListener("click", () => {
-      state.selectedDate = addDays(state.selectedDate, -1);
+    document.getElementById("prevDayBtn").addEventListener("click",()=>{
+      state.selectedDate=addDays(state.selectedDate,-1);
       renderAll();
     });
 
-    document.getElementById("nextDayBtn").addEventListener("click", () => {
-      state.selectedDate = addDays(state.selectedDate, 1);
+    document.getElementById("nextDayBtn").addEventListener("click",()=>{
+      state.selectedDate=addDays(state.selectedDate,1);
       renderAll();
     });
 
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        state.ui.activeView = tab.dataset.view;
-        saveJSON(STORAGE_KEYS.ui, state.ui);
+    document.querySelectorAll(".tab").forEach(tab=>{
+      tab.addEventListener("click",()=>{
+        state.ui.activeView=tab.dataset.view;
+        saveJSON(STORAGE_KEYS.ui,state.ui);
         renderAll();
       });
     });
 
-    document.getElementById("addManualTaskBtn").addEventListener("click", () => {
-      const input = document.getElementById("manualTaskInput");
-      const type = document.getElementById("manualTaskType").value;
-      const link = document.getElementById("manualTaskLink").value;
-      const value = input.value.trim();
-      if (!value) return;
+    document.getElementById("addManualTaskBtn").addEventListener("click",()=>{
+      const input=document.getElementById("manualTaskInput");
+      const type=document.getElementById("manualTaskType").value;
+      const link=document.getElementById("manualTaskLink").value;
+      const value=input.value.trim();
+      if(!value) return;
 
-      addTask(value, type, state.selectedDate, link);
-      input.value = "";
-      document.getElementById("manualTaskLink").value = "";
-      document.getElementById("manualTaskType").value = "once";
+      addTask(value,type,state.selectedDate,link);
+      input.value="";
+      document.getElementById("manualTaskLink").value="";
+      document.getElementById("manualTaskType").value="once";
       renderAll();
     });
 
-    document.getElementById("manualTaskInput").addEventListener("keydown", e => {
-      if (e.key === "Enter") {
+    document.getElementById("manualTaskInput").addEventListener("keydown",e=>{
+      if(e.key==="Enter"){
         e.preventDefault();
         document.getElementById("addManualTaskBtn").click();
       }
     });
 
-    document.getElementById("saveNoteBtn").addEventListener("click", () => {
-      state.notes[state.selectedDate] = document.getElementById("dailyNote").value.trim();
-      saveJSON(STORAGE_KEYS.notes, state.notes);
-      const status = document.getElementById("noteStatus");
-      status.textContent = "Not kaydedildi";
-      status.className = "tiny-note ok";
-      setTimeout(() => {
-        status.textContent = "";
-        status.className = "tiny-note";
-      }, 1500);
+    document.getElementById("saveNoteBtn").addEventListener("click",()=>{
+      state.notes[state.selectedDate]=document.getElementById("dailyNote").value.trim();
+      saveJSON(STORAGE_KEYS.notes,state.notes);
+      const status=document.getElementById("noteStatus");
+      status.textContent="Not kaydedildi";
+      status.className="tiny-note ok";
+      setTimeout(()=>{
+        status.textContent="";
+        status.className="tiny-note";
+      },1500);
     });
 
-    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
-      state.settings.userName = document.getElementById("userName").value.trim();
-      state.settings.b2Frequency = Number(document.getElementById("b2Frequency").value || 1);
-      saveJSON(STORAGE_KEYS.settings, state.settings);
-      const status = document.getElementById("settingsStatus");
-      status.textContent = "Ayarlar kaydedildi";
-      status.className = "tiny-note ok";
+    document.getElementById("saveSettingsBtn").addEventListener("click",()=>{
+      state.settings.userName=document.getElementById("userName").value.trim();
+      state.settings.b2Frequency=Number(document.getElementById("b2Frequency").value||1);
+      saveJSON(STORAGE_KEYS.settings,state.settings);
+      const status=document.getElementById("settingsStatus");
+      status.textContent="Ayarlar kaydedildi";
+      status.className="tiny-note ok";
       renderAll();
-      setTimeout(() => {
-        status.textContent = "";
-        status.className = "tiny-note";
-      }, 1500);
+      setTimeout(()=>{
+        status.textContent="";
+        status.className="tiny-note";
+      },1500);
     });
 
-    document.getElementById("reportToggleBtn").addEventListener("click", () => {
+    document.getElementById("reportToggleBtn").addEventListener("click",()=>{
       document.getElementById("reportPanel").classList.toggle("open");
     });
 
-    document.getElementById("sendReportBtn").addEventListener("click", sendReport);
+    document.getElementById("sendReportBtn").addEventListener("click",sendReport);
 
     renderAll();
   </script>
