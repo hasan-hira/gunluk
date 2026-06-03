@@ -1,1192 +1,1090 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Günlük Takip" />
-  <title>Günlük Takip</title>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Günlük Takip">
+<meta name="theme-color" content="#1a1a2e">
+<title>Günlük Takip</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --bg2: #1a1a2e;
+    --bg3: #16213e;
+    --card: #1e1e35;
+    --card2: #252540;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --text2: #9999bb;
+    --text3: #6666aa;
+    --border: #2a2a4a;
+    --success: #43e97b;
+    --danger: #ff6584;
+    --warn: #f7971e;
+    --radius: 12px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+  /* NAV */
+  .nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center;
+    padding: 0 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-title {
+    font-weight: 700; font-size: 16px;
+    color: var(--accent); white-space: nowrap;
+    padding: 14px 12px 14px 4px;
+    border-right: 1px solid var(--border);
+    margin-right: 8px;
+  }
+  .nav-tabs { display: flex; gap: 2px; }
+  .nav-tab {
+    padding: 10px 12px; cursor: pointer;
+    border-radius: 8px; white-space: nowrap;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    transition: all 0.2s; border: none; background: none;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--card); }
+  .nav-tab.active { color: var(--accent); background: rgba(108,99,255,0.15); }
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --primary:#4f5dff;
-      --success:#16a34a;
-      --danger:#dc2626;
-      --warn:#ea580c;
-      --shadow:0 8px 24px rgba(0,0,0,.08);
-      --radius:16px;
-    }
+  /* DATE NAV */
+  .date-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .date-nav button {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text2); padding: 6px 14px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; transition: all 0.2s;
+  }
+  .date-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .date-display { text-align: center; }
+  .date-display .day-name { font-size: 12px; color: var(--text3); }
+  .date-display .day-full { font-size: 15px; font-weight: 600; }
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+  /* PAGE */
+  .page { display: none; padding: 16px; max-width: 700px; margin: 0 auto; }
+  .page.active { display: block; }
 
-    .app{
-      max-width:1200px;
-      margin:0 auto;
-      padding:16px 16px 100px;
-    }
+  /* CARDS */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-    }
+  /* SUMMARY */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .summary-item {
+    background: var(--card2); border-radius: 10px; padding: 12px;
+    text-align: center;
+  }
+  .summary-item .num { font-size: 26px; font-weight: 700; }
+  .summary-item .lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .summary-item.total .num { color: var(--accent); }
+  .summary-item.done .num { color: var(--success); }
+  .summary-item.left .num { color: var(--warn); }
+  .progress-bar { height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent3)); transition: width 0.4s; }
 
-    h1,h2,h3,h4,p{margin:0}
-    .muted{color:var(--muted)}
+  /* TASK */
+  .task-section { margin-bottom: 8px; }
+  .section-label {
+    font-size: 11px; color: var(--text3); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 4px 0 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    .tabs{
-      display:flex;
-      gap:8px;
-      overflow:auto;
-      margin-bottom:16px;
-      padding-bottom:4px;
-    }
+  .task-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card2); border-radius: 10px;
+    padding: 11px 12px; margin-bottom: 6px;
+    border: 1px solid transparent; transition: all 0.2s;
+    position: relative;
+  }
+  .task-item.completed { opacity: 0.6; border-color: var(--success) !important; }
+  .task-item.completed .task-name { text-decoration: line-through; color: var(--text3); }
 
-    .tab{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:999px;
-      padding:10px 14px;
-      cursor:pointer;
-      white-space:nowrap;
-      color:var(--muted);
-    }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--border); cursor: pointer;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; background: transparent;
+  }
+  .task-check:hover { border-color: var(--accent); }
+  .task-item.completed .task-check { background: var(--success); border-color: var(--success); }
+  .task-check-inner { display: none; }
+  .task-item.completed .task-check-inner { display: block; color: #fff; font-size: 12px; }
 
-    .tab.active{
-      background:var(--primary);
-      color:#fff;
-      border-color:var(--primary);
-    }
+  .task-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .task-link {
+    font-size: 11px; color: var(--accent); text-decoration: none;
+    padding: 3px 8px; background: rgba(108,99,255,0.1); border-radius: 5px;
+    white-space: nowrap;
+  }
+  .task-link:hover { background: rgba(108,99,255,0.2); }
+  .task-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .badge-daily { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .badge-everday { background: rgba(67,233,123,0.15); color: var(--success); }
 
-    .view{display:none}
-    .view.active{display:block}
+  .task-actions { display: flex; gap: 4px; }
+  .task-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-size: 14px; padding: 2px 4px;
+    border-radius: 4px; transition: all 0.2s;
+  }
+  .task-btn:hover { color: var(--text); background: var(--border); }
+  .task-btn.delete:hover { color: var(--danger); }
 
-    .grid{
-      display:grid;
-      grid-template-columns:1.2fr .8fr;
-      gap:16px;
-    }
+  /* ADD TASK */
+  .add-task-row {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .add-task-row input, .add-task-row select {
+    background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 12px; border-radius: 8px;
+    font-size: 13px; outline: none; transition: border 0.2s;
+  }
+  .add-task-row input:focus, .add-task-row select:focus { border-color: var(--accent); }
+  .add-task-row input { flex: 1; min-width: 140px; }
+  .add-task-row input.link-input { min-width: 120px; flex: 0.7; }
+  .add-task-row select { min-width: 110px; }
+  .btn {
+    padding: 9px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; border: none; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #5a52e0; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-ghost { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    .card{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:16px;
-    }
+  /* NOTE */
+  .note-area {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 10px 12px;
+    font-size: 14px; resize: vertical; min-height: 80px; outline: none;
+    font-family: inherit; transition: border 0.2s; margin-bottom: 8px;
+  }
+  .note-area:focus { border-color: var(--accent); }
 
-    .section-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      margin-bottom:12px;
-    }
+  /* WEEKLY */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .week-day {
+    background: var(--card2); border-radius: 8px; padding: 8px 4px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    border: 1px solid var(--border);
+  }
+  .week-day:hover { border-color: var(--accent); }
+  .week-day.today { border-color: var(--accent); background: rgba(108,99,255,0.1); }
+  .week-day.selected { border-color: var(--accent2); background: rgba(255,101,132,0.1); }
+  .week-day .wd-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .week-day .wd-num { font-size: 16px; font-weight: 700; }
+  .week-day .wd-pct {
+    font-size: 10px; margin-top: 3px;
+    width: 100%; height: 3px; border-radius: 2px;
+    background: var(--border); overflow: hidden;
+  }
+  .week-day .wd-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.4s; }
+  .week-day .wd-score { font-size: 10px; color: var(--text3); margin-top: 3px; }
 
-    .btn,.input,.textarea,select{
-      font:inherit;
-    }
+  .week-detail { margin-top: 12px; }
+  .week-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+  .week-stat {
+    background: var(--card2); border-radius: 8px; padding: 12px;
+  }
+  .week-stat .ws-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .week-stat .ws-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .week-stat .ws-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
-    .btn{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:12px;
-      padding:10px 14px;
-      cursor:pointer;
-    }
+  .weekly-bar-chart { margin-top: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .bar-label { width: 24px; font-size: 11px; color: var(--text3); text-align: right; }
+  .bar-track { flex: 1; height: 14px; background: var(--card2); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent3)); transition: width 0.6s; }
+  .bar-pct { width: 32px; font-size: 11px; color: var(--text2); text-align: right; }
 
-    .btn.primary{
-      background:var(--primary);
-      border-color:var(--primary);
-      color:#fff;
-    }
+  /* STUDY PLAN */
+  .study-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card2); border-radius: 10px;
+    padding: 11px 12px; margin-bottom: 6px;
+    border: 1px solid var(--border);
+  }
+  .study-item.due { border-color: var(--warn); }
+  .study-item.overdue { border-color: var(--danger); }
+  .study-item.done-item { border-color: var(--success); opacity: 0.7; }
+  .study-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-warn { background: var(--warn); }
+  .dot-danger { background: var(--danger); }
+  .dot-success { background: var(--success); }
+  .dot-neutral { background: var(--text3); }
+  .study-info { flex: 1; }
+  .study-title { font-size: 13px; font-weight: 600; }
+  .study-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .study-open {
+    font-size: 12px; color: var(--accent); text-decoration: none;
+    padding: 4px 10px; background: rgba(108,99,255,0.1); border-radius: 6px;
+  }
+  .study-open:hover { background: rgba(108,99,255,0.2); }
+  .study-done-btn {
+    font-size: 11px; padding: 4px 10px; border-radius: 6px;
+    background: rgba(67,233,123,0.1); color: var(--success);
+    border: 1px solid rgba(67,233,123,0.2); cursor: pointer;
+    font-weight: 600; transition: all 0.2s; white-space: nowrap;
+  }
+  .study-done-btn:hover { background: rgba(67,233,123,0.25); }
 
-    .btn.small{
-      font-size:13px;
-      padding:8px 10px;
-    }
+  /* SETTINGS */
+  .settings-group { margin-bottom: 16px; }
+  .settings-label { font-size: 12px; color: var(--text3); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .settings-input {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 12px; border-radius: 8px;
+    font-size: 14px; outline: none; transition: border 0.2s;
+  }
+  .settings-input:focus { border-color: var(--accent); }
+  .settings-row { display: flex; gap: 8px; align-items: center; }
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 14px; }
+  .toggle-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
-    .btn.icon{
-      min-width:36px;
-      padding:7px 10px;
-      font-size:13px;
-    }
+  /* MAIL SECTION - compact */
+  .mail-compact {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--card2);
+    border-radius: 8px; border: 1px solid var(--border); margin-top: 10px;
+  }
+  .mail-compact span { flex: 1; font-size: 13px; color: var(--text2); }
+  .mail-compact button {
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text2); border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .mail-compact button:hover { border-color: var(--accent); color: var(--accent); }
 
-    .date-controls{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 1000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; max-width: 360px; width: 100%;
+  }
+  .modal h3 { margin-bottom: 12px; font-size: 16px; }
+  .modal p { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
 
-    .input,.textarea{
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      background:#fff;
-    }
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 20px; border-radius: 10px;
+    font-size: 13px; z-index: 2000; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
 
-    .date-input{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      background:#fff;
-    }
+  /* HELPERS */
+  .flex { display: flex; }
+  .gap8 { gap: 8px; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .text-sm { font-size: 12px; color: var(--text3); }
+  .tag {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 6px; font-weight: 600;
+  }
+  .tag-b2 { background: rgba(247,151,30,0.15); color: var(--warn); }
+  .tag-b1 { background: rgba(108,99,255,0.15); color: var(--accent); }
+  .tag-a { background: rgba(67,233,123,0.15); color: var(--success); }
+  .tag-delft { background: rgba(255,101,132,0.15); color: var(--accent2); }
 
-    .textarea{
-      min-height:110px;
-      resize:vertical;
-    }
+  .emoji-icon { font-size: 16px; }
 
-    .task-list{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .collapse-btn {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 13px; padding: 2px 6px;
+    border-radius: 5px; transition: all 0.2s;
+  }
+  .collapse-btn:hover { color: var(--text); background: var(--border); }
 
-    .task-item{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 14px;
-      background:#fff;
-      transition:.15s ease;
-    }
-
-    .task-item.done{
-      opacity:.68;
-    }
-
-    .task-item.done .task-title,
-    .task-item.done .task-desc{
-      text-decoration:line-through;
-    }
-
-    .task-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
-    .task-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex:1;
-      min-width:0;
-    }
-
-    .task-main{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      flex:1;
-      min-width:0;
-    }
-
-    .task-title{
-      font-weight:700;
-      margin:0;
-      white-space:nowrap;
-    }
-
-    .task-desc{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.2;
-      margin:0;
-      white-space:nowrap;
-    }
-
-    .task-check{
-      transform:scale(1.2);
-      cursor:pointer;
-      margin:0 2px 0 0;
-    }
-
-    .badge-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin:0;
-    }
-
-    .badge{
-      font-size:12px;
-      border-radius:999px;
-      padding:4px 8px;
-      border:1px solid var(--line);
-      background:#f9fafb;
-      white-space:nowrap;
-    }
-
-    .badge.overdue{
-      background:#fef2f2;
-      color:#b91c1c;
-      border-color:#fecaca;
-    }
-
-    .badge.manual{
-      background:#eef2ff;
-      color:#4338ca;
-      border-color:#c7d2fe;
-    }
-
-    .badge.recurring{
-      background:#ecfeff;
-      color:#155e75;
-      border-color:#a5f3fc;
-    }
-
-    .task-actions{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      margin:0;
-      flex-shrink:0;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .link-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      text-decoration:none;
-      color:var(--text);
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:10px;
-      padding:8px 10px;
-      font-size:13px;
-      white-space:nowrap;
-    }
-
-    .danger-btn{
-      background:#fff5f5;
-      color:var(--danger);
-      border:1px solid #fecaca;
-    }
-
-    .summary{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-    }
-
-    .stat{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:14px;
-      background:#fff;
-    }
-
-    .stat .k{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .stat .v{
-      margin-top:6px;
-      font-size:24px;
-      font-weight:700;
-    }
-
-    .form-row{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      margin-bottom:12px;
-    }
-
-    .inline-form{
-      display:grid;
-      grid-template-columns:1.1fr 180px 1fr auto;
-      gap:8px;
-      margin-bottom:14px;
-    }
-
-    .weekly-grid{
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:10px;
-    }
-
-    .week-day{
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px;
-      min-height:150px;
-    }
-
-    .week-day.today{
-      outline:2px solid var(--primary);
-      background:#f8fbff;
-    }
-
-    .mini-task{
-      font-size:12px;
-      border-radius:10px;
-      padding:7px 8px;
-      background:#f9fafb;
-      border:1px solid var(--line);
-      margin-bottom:6px;
-    }
-
-    .mini-task.done{
-      opacity:.55;
-      text-decoration:line-through;
-    }
-
-    .footer-tools{
-      position:fixed;
-      right:14px;
-      bottom:14px;
-      z-index:50;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:flex-end;
-    }
-
-    .safe-toggle{
-      border:none;
-      background:#111827;
-      color:#fff;
-      border-radius:999px;
-      padding:10px 12px;
-      cursor:pointer;
-      box-shadow:var(--shadow);
-      font-size:13px;
-    }
-
-    .report-panel{
-      width:min(360px,calc(100vw - 24px));
-      background:#fff;
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      border:1px solid var(--line);
-      padding:12px;
-      display:none;
-    }
-
-    .report-panel.open{
-      display:block;
-    }
-
-    .tiny-note{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:6px;
-    }
-
-    .ok{color:var(--success)}
-    .warn{color:var(--warn)}
-    .danger{color:var(--danger)}
-
-    @media (max-width:900px){
-      .grid{grid-template-columns:1fr}
-      .summary{grid-template-columns:1fr}
-      .weekly-grid{grid-template-columns:1fr}
-      .inline-form{grid-template-columns:1fr}
-      .task-row{align-items:flex-start;flex-direction:column}
-      .task-left{width:100%}
-      .task-actions{width:100%;justify-content:flex-start}
-      .task-main{align-items:flex-start}
-      .task-title,.task-desc{white-space:normal}
-    }
-  </style>
+  @media (max-width: 480px) {
+    .week-grid { grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .week-day .wd-num { font-size: 13px; }
+    .week-stat-grid { grid-template-columns: 1fr 1fr; }
+    .add-task-row { flex-direction: column; }
+    .add-task-row input, .add-task-row select, .add-task-row .btn { width: 100%; }
+  }
+</style>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div>
-        <h1>Günlük Takip</h1>
-        <p class="muted">Hazır plan + kendi görevlerin</p>
-      </div>
 
-      <div class="date-controls">
-        <button class="btn" id="prevDayBtn">← Önceki</button>
-        <input class="date-input" type="date" id="selectedDate" />
-        <button class="btn" id="nextDayBtn">Sonraki →</button>
-        <button class="btn primary" id="todayBtn">Bugün</button>
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-title">📋 Günlük</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('daily')">📅 Günlük</button>
+    <button class="nav-tab" onclick="showPage('weekly')">📊 Haftalık</button>
+    <button class="nav-tab" onclick="showPage('study')">📚 Çalışma</button>
+    <button class="nav-tab" onclick="showPage('settings')">⚙️ Ayarlar</button>
+  </div>
+</div>
+
+<!-- DATE NAV -->
+<div class="date-nav">
+  <button onclick="changeDay(-1)">← Önceki</button>
+  <div class="date-display">
+    <div class="day-name" id="dayName"></div>
+    <div class="day-full" id="dayFull"></div>
+  </div>
+  <button onclick="changeDay(1)">Sonraki →</button>
+</div>
+
+<!-- ===== DAILY PAGE ===== -->
+<div class="page active" id="page-daily">
+
+  <!-- Summary -->
+  <div class="card">
+    <div class="summary-grid">
+      <div class="summary-item total">
+        <div class="num" id="totalCount">0</div>
+        <div class="lbl">Toplam</div>
+      </div>
+      <div class="summary-item done">
+        <div class="num" id="doneCount">0</div>
+        <div class="lbl">Tamamlanan</div>
+      </div>
+      <div class="summary-item left">
+        <div class="num" id="leftCount">0</div>
+        <div class="lbl">Kalan</div>
       </div>
     </div>
-
-    <div class="tabs">
-      <button class="tab active" data-view="gunluk">Günlük</button>
-      <button class="tab" data-view="haftalik">Haftalık</button>
-      <button class="tab" data-view="kelime">Kelime Tekrarı</button>
-      <button class="tab" data-view="dinleme">Dinleme Planı</button>
-      <button class="tab" data-view="ayarlar">Ayarlar</button>
-    </div>
-
-    <section class="view active" id="view-gunluk">
-      <div class="grid">
-        <div class="card">
-          <div class="section-title">
-            <h2>Bugünün planı</h2>
-            <span class="muted" id="todayLabel"></span>
-          </div>
-
-          <div class="inline-form">
-            <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle..." />
-            <select id="manualTaskType" class="input">
-              <option value="once">Sadece bugün</option>
-              <option value="daily">Her gün</option>
-            </select>
-            <input id="manualTaskLink" class="input" type="url" placeholder="Kaynak linki (isteğe bağlı)" />
-            <button class="btn primary" id="addManualTaskBtn">Görev Ekle</button>
-          </div>
-
-          <div class="task-list" id="dailyTaskList"></div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">
-            <h2>Özet</h2>
-          </div>
-
-          <div class="summary">
-            <div class="stat">
-              <div class="k">Toplam görev</div>
-              <div class="v" id="statTotal">0</div>
-            </div>
-            <div class="stat">
-              <div class="k">Tamamlanan</div>
-              <div class="v" id="statDone">0</div>
-            </div>
-            <div class="stat">
-              <div class="k">Kalan</div>
-              <div class="v" id="statLeft">0</div>
-            </div>
-          </div>
-
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
-
-          <div class="form-row">
-            <label for="dailyNote"><strong>Günlük not</strong></label>
-            <textarea id="dailyNote" class="textarea" placeholder="Bugün nasıldı?"></textarea>
-          </div>
-
-          <button class="btn" id="saveNoteBtn">Notu Kaydet</button>
-          <div class="tiny-note" id="noteStatus"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="view" id="view-haftalik">
-      <div class="card">
-        <div class="section-title">
-          <h2>Haftalık görünüm</h2>
-        </div>
-        <div class="weekly-grid" id="weeklyGrid"></div>
-      </div>
-    </section>
-
-    <section class="view" id="view-kelime">
-      <div class="grid">
-        <div class="card">
-          <div class="section-title">
-            <h2>Kelime tekrar planı</h2>
-          </div>
-          <div class="task-list" id="wordTaskList"></div>
-        </div>
-
-        <div class="card">
-          <h2>Kaynaklar</h2>
-          <div class="task-list">
-            <div class="task-item"><div class="task-title">A1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a></div></div>
-            <div class="task-item"><div class="task-title">A2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
-            <div class="task-item"><div class="task-title">B2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">Aç</a></div></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="view" id="view-dinleme">
-      <div class="grid">
-        <div class="card">
-          <div class="section-title">
-            <h2>Bugünün dinleme görevi</h2>
-            <span class="muted">Haftada 1 kez</span>
-          </div>
-          <div class="task-list" id="listeningTaskList"></div>
-        </div>
-
-        <div class="card">
-          <h2>Döngü planı</h2>
-          <div class="task-list">
-            <div class="task-item"><div class="task-title">Delft 1–20</div></div>
-            <div class="task-item"><div class="task-title">Delft 21–33</div></div>
-            <div class="task-item"><div class="task-title">Delft 34–42</div></div>
-            <div class="task-item"><div class="task-title">Delftse B1 / 1-14</div></div>
-            <div class="task-item"><div class="task-title">Delftse B1 / 15-28</div></div>
-            <div class="task-item"><div class="task-title">Delftse B1 / 29-42</div></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="view" id="view-ayarlar">
-      <div class="grid">
-        <div class="card">
-          <h2>Ayarlar</h2>
-          <div class="form-row">
-            <label for="userName"><strong>Ad</strong></label>
-            <input id="userName" class="input" type="text" placeholder="Hasan" />
-          </div>
-
-          <div class="form-row">
-            <label for="b2Frequency"><strong>B2 sıklığı</strong></label>
-            <select id="b2Frequency" class="input">
-              <option value="1">Her gün</option>
-              <option value="2">2 günde bir</option>
-            </select>
-          </div>
-
-          <button class="btn primary" id="saveSettingsBtn">Ayarları Kaydet</button>
-          <div class="tiny-note" id="settingsStatus"></div>
-        </div>
-
-        <div class="card">
-          <h2>Mail ayarı</h2>
-          <p class="muted">Alıcı mail adresi kod içinde sabit tutuluyor.</p>
-        </div>
-      </div>
-    </section>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
   </div>
 
-  <div class="footer-tools">
-    <button class="safe-toggle" id="reportToggleBtn">Rapor Gönder</button>
-    <div class="report-panel" id="reportPanel">
-      <div class="form-row">
-        <label for="confirmText"><strong>Onay</strong></label>
-        <input id="confirmText" class="input" type="text" placeholder='Göndermek için "EVET" yaz' />
-      </div>
-      <button class="btn primary small" id="sendReportBtn">Günlük raporu gönder</button>
-      <div class="tiny-note" id="reportStatus"></div>
+  <!-- Tasks -->
+  <div class="card">
+    <div class="section-header">
+      <div class="card-title">📌 Görevler</div>
+    </div>
+    <div class="task-section">
+      <div class="section-label">Her gün</div>
+      <div id="everydayTasks"></div>
+    </div>
+    <div class="task-section">
+      <div class="section-label">Sadece bugün</div>
+      <div id="dailyTasks"></div>
+    </div>
+    <!-- Add Task -->
+    <div class="add-task-row">
+      <input type="text" id="newTaskName" placeholder="Yeni görev..." onkeydown="if(event.key==='Enter')addTask()">
+      <input type="url" id="newTaskLink" class="link-input" placeholder="Link (opsiyonel)">
+      <select id="newTaskType">
+        <option value="everyday">Her gün</option>
+        <option value="daily">Sadece bugün</option>
+      </select>
+      <button class="btn btn-primary" onclick="addTask()">+ Ekle</button>
     </div>
   </div>
 
-  <script>
-    emailjs.init({ publicKey: "fD5cr29ZVYp51xJ2T" });
+  <!-- Note -->
+  <div class="card">
+    <div class="card-title">📝 Günlük not</div>
+    <textarea class="note-area" id="noteArea" placeholder="Bugün ne düşündün..."></textarea>
+    <button class="btn btn-ghost btn-sm" onclick="saveNote()">Kaydet</button>
+  </div>
+</div>
 
-    const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
+<!-- ===== WEEKLY PAGE ===== -->
+<div class="page" id="page-weekly">
+  <div class="card">
+    <div class="card-title">📅 Bu hafta</div>
+    <div class="week-grid" id="weekGrid"></div>
+    <div class="week-detail">
+      <div class="week-stat-grid">
+        <div class="week-stat">
+          <div class="ws-label">Haftalık ortalama</div>
+          <div class="ws-val" id="weekAvg">–%</div>
+          <div class="ws-sub">Tamamlanma oranı</div>
+        </div>
+        <div class="week-stat">
+          <div class="ws-label">En iyi gün</div>
+          <div class="ws-val" id="weekBest">–</div>
+          <div class="ws-sub" id="weekBestScore"></div>
+        </div>
+        <div class="week-stat">
+          <div class="ws-label">Toplam tamamlanan</div>
+          <div class="ws-val" id="weekTotal">0</div>
+          <div class="ws-sub">görev</div>
+        </div>
+        <div class="week-stat">
+          <div class="ws-label">Streak</div>
+          <div class="ws-val" id="streakCount">0</div>
+          <div class="ws-sub">gün üst üste</div>
+        </div>
+      </div>
+      <div class="weekly-bar-chart" id="barChart"></div>
+    </div>
+  </div>
 
-    const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_delft6",
-      completions: "gunluk_takip_completions_delft6",
-      notes: "gunluk_takip_notes_delft6",
-      ui: "gunluk_takip_ui_delft6",
-      manualTasks: "gunluk_takip_manual_tasks_delft6",
-      recurringTasks: "gunluk_takip_recurring_tasks_delft6"
+  <!-- Monthly heatmap placeholder -->
+  <div class="card">
+    <div class="card-title">🗓 Aylık özet</div>
+    <div id="monthCalendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+  </div>
+</div>
+
+<!-- ===== STUDY PAGE ===== -->
+<div class="page" id="page-study">
+
+  <!-- Kelime listesi -->
+  <div class="card">
+    <div class="card-title">🔤 Kelime listesi</div>
+    <div id="wordListItems"></div>
+  </div>
+
+  <!-- Delftse series -->
+  <div class="card">
+    <div class="card-title">🎧 Delftse – Dinleme planı</div>
+    <div id="delftseItems"></div>
+  </div>
+
+  <!-- Taalcompleet -->
+  <div class="card">
+    <div class="card-title">📖 Taalcompleet B1</div>
+    <div id="taalItems"></div>
+  </div>
+
+  <!-- B2 Plan -->
+  <div class="card">
+    <div class="card-title">📗 CodePlus B2 <span class="tag tag-b2" style="margin-left:6px">11 Bölüm</span></div>
+    <div id="b2Items"></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS PAGE ===== -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">👤 Profil</div>
+    <div class="settings-group">
+      <div class="settings-label">Ad</div>
+      <input type="text" class="settings-input" id="settingsName" placeholder="Adın...">
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">B2 tekrar sıklığı</div>
+      <select class="settings-input" id="b2Freq">
+        <option value="1">Her gün</option>
+        <option value="2" selected>2 günde bir</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()">Kaydet</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📧 Günlük rapor</div>
+    <p class="text-sm" style="margin-bottom:8px;">Günlük takip raporunu e-posta ile gönder.</p>
+    <div class="mail-compact">
+      <span>📨 Raporu e-posta ile gönder</span>
+      <button onclick="confirmSendReport()">Gönder</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗑 Veri</div>
+    <button class="btn btn-danger btn-sm" onclick="confirmClear()">Tüm veriyi sıfırla</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Onay</h3>
+    <p id="modalText">Emin misin?</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary btn-sm" id="modalConfirmBtn" onclick="">Tamam</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+(function(){
+  try { emailjs.init({publicKey:"fD5cr29ZVYp51xJ2T"}); } catch(e){}
+})();
+
+// ======== STATE ========
+const DAYS_TR = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+const DAYS_FULL = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+let currentDate = new Date();
+currentDate.setHours(0,0,0,0);
+
+function dateKey(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem('gunluk_v3') || '{}'); } catch(e) { return {}; }
+}
+function saveData(d) {
+  localStorage.setItem('gunluk_v3', JSON.stringify(d));
+}
+
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem('gunluk_settings') || '{}'); } catch(e) { return {}; }
+}
+function saveSettingsData(s) {
+  localStorage.setItem('gunluk_settings', JSON.stringify(s));
+}
+
+// ======== TASKS ========
+const DEFAULT_EVERYDAY_TASKS = [
+  { id: 'sport',    name: '🏋️ Fullbody veya yürüyüşe çık', type: 'everyday', link: '' },
+  { id: 'film',     name: '🎬 Film izle', type: 'everyday', link: '' },
+  { id: 'twitter',  name: '🐦 Twitter süresini kısalt', type: 'everyday', link: '' },
+  { id: 'phone',    name: '📵 Telefonu 22:30\'da bırak', type: 'everyday', link: '' },
+  { id: 'call',     name: '📞 Birini ara veya mesaj at', type: 'everyday', link: '' },
+  { id: 'zikir',    name: '📿 Günlük zikirler', type: 'everyday', link: '' },
+  { id: 'quran',    name: '📖 Kuran oku', type: 'everyday', link: '' },
+  { id: 'insta',    name: '📱 Instagram', type: 'everyday', link: 'https://www.instagram.com/your_activity/interactions/likes' },
+];
+
+function getTaskDefs() {
+  const s = getSettings();
+  return s.taskDefs || DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order: i}));
+}
+function saveTaskDefs(defs) {
+  const s = getSettings();
+  s.taskDefs = defs;
+  saveSettingsData(s);
+}
+
+function getDayData(dateStr) {
+  const d = getData();
+  if (!d[dateStr]) d[dateStr] = { tasks: {}, note: '' };
+  return d[dateStr];
+}
+function saveDayData(dateStr, dayData) {
+  const d = getData();
+  d[dateStr] = dayData;
+  saveData(d);
+}
+
+// ======== RENDER DAILY ========
+function renderDaily() {
+  const key = dateKey(currentDate);
+  const dayData = getDayData(key);
+  const defs = getTaskDefs();
+
+  // Date display
+  document.getElementById('dayName').textContent = DAYS_FULL[currentDate.getDay()];
+  const isToday = dateKey(currentDate) === dateKey(new Date());
+  document.getElementById('dayFull').textContent =
+    (isToday ? '📍 ' : '') +
+    currentDate.getDate() + ' ' + MONTHS_TR[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+
+  const everydayDefs = defs.filter(t => t.type === 'everyday').sort((a,b) => (a.order||0)-(b.order||0));
+  const dailyDefs = defs.filter(t => t.type === 'daily' || (t.dateAdded && t.dateAdded !== 'permanent')).sort((a,b) => (a.order||0)-(b.order||0));
+  // For 'daily' tasks only show if added on this date or if permanent
+  const todayDailyDefs = defs.filter(t => t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)).sort((a,b) => (a.order||0)-(b.order||0));
+
+  renderTaskList('everydayTasks', everydayDefs, dayData.tasks, key, defs);
+  renderTaskList('dailyTasks', todayDailyDefs, dayData.tasks, key, defs);
+
+  updateSummary(defs, dayData.tasks, key);
+
+  document.getElementById('noteArea').value = dayData.note || '';
+}
+
+function renderTaskList(containerId, taskDefs, taskState, key, allDefs) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  if (taskDefs.length === 0) {
+    container.innerHTML = '<div class="text-sm" style="padding:6px 0;">Görev yok</div>';
+    return;
+  }
+  taskDefs.forEach((t, i) => {
+    const done = !!taskState[t.id];
+    const div = document.createElement('div');
+    div.className = 'task-item' + (done ? ' completed' : '');
+    div.dataset.id = t.id;
+
+    const linkHtml = t.link
+      ? `<a href="${t.link}" target="_blank" class="task-link">Aç</a>`
+      : '';
+
+    const idx = allDefs.findIndex(d => d.id === t.id);
+    const isFirst = i === 0;
+    const isLast = i === taskDefs.length - 1;
+
+    div.innerHTML = `
+      <div class="task-check" onclick="toggleTask('${t.id}','${key}')">
+        <span class="task-check-inner">✓</span>
+      </div>
+      <div class="task-name">${t.name}</div>
+      ${linkHtml}
+      <div class="task-actions">
+        <button class="task-btn" onclick="moveTask('${t.id}','up')" title="Yukarı" ${isFirst?'disabled style="opacity:0.3"':''}>↑</button>
+        <button class="task-btn" onclick="moveTask('${t.id}','down')" title="Aşağı" ${isLast?'disabled style="opacity:0.3"':''}>↓</button>
+        <button class="task-btn delete" onclick="deleteTask('${t.id}')" title="Sil">🗑</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleTask(taskId, dateKey_) {
+  const dayData = getDayData(dateKey_);
+  dayData.tasks[taskId] = !dayData.tasks[taskId];
+  saveDayData(dateKey_, dayData);
+  renderDaily();
+}
+
+function updateSummary(defs, taskState, key) {
+  const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
+  const total = todayDefs.length;
+  const done = todayDefs.filter(t => taskState[t.id]).length;
+  const left = total - done;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('leftCount').textContent = left;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function addTask() {
+  const name = document.getElementById('newTaskName').value.trim();
+  if (!name) return;
+  const link = document.getElementById('newTaskLink').value.trim();
+  const type = document.getElementById('newTaskType').value;
+  const defs = getTaskDefs();
+  const maxOrder = defs.reduce((m,t) => Math.max(m, t.order||0), 0);
+  const id = 'task_' + Date.now();
+  const newTask = { id, name, type, link, order: maxOrder + 1 };
+  if (type === 'daily') newTask.dateAdded = dateKey(currentDate);
+  defs.push(newTask);
+  saveTaskDefs(defs);
+  document.getElementById('newTaskName').value = '';
+  document.getElementById('newTaskLink').value = '';
+  renderDaily();
+  showToast('Görev eklendi ✓');
+}
+
+function deleteTask(taskId) {
+  const defs = getTaskDefs();
+  const idx = defs.findIndex(d => d.id === taskId);
+  if (idx < 0) return;
+  defs.splice(idx, 1);
+  saveTaskDefs(defs);
+  renderDaily();
+  showToast('Görev silindi');
+}
+
+function moveTask(taskId, dir) {
+  const defs = getTaskDefs();
+  const type = defs.find(d => d.id === taskId)?.type || 'everyday';
+  const sameType = defs.filter(d => d.type === type).sort((a,b) => (a.order||0)-(b.order||0));
+  const idx = sameType.findIndex(d => d.id === taskId);
+  if (dir === 'up' && idx > 0) {
+    const a = sameType[idx], b = sameType[idx-1];
+    const tmp = a.order; a.order = b.order; b.order = tmp;
+  } else if (dir === 'down' && idx < sameType.length - 1) {
+    const a = sameType[idx], b = sameType[idx+1];
+    const tmp = a.order; a.order = b.order; b.order = tmp;
+  }
+  saveTaskDefs(defs);
+  renderDaily();
+}
+
+function saveNote() {
+  const key = dateKey(currentDate);
+  const dayData = getDayData(key);
+  dayData.note = document.getElementById('noteArea').value;
+  saveDayData(key, dayData);
+  showToast('Not kaydedildi ✓');
+}
+
+// ======== WEEKLY ========
+function renderWeekly() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  // Get Monday of this week
+  const day = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+
+  let weekTotals = 0, weekDone = 0, bestDay = null, bestPct = -1;
+  const barData = [];
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = dateKey(d);
+    const isToday = dateKey(d) === dateKey(today);
+    const isFuture = d > today;
+
+    const defs = getTaskDefs();
+    const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
+    const dayData = getDayData(key);
+    const total = todayDefs.length;
+    const done = isFuture ? 0 : todayDefs.filter(t => dayData.tasks[t.id]).length;
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+
+    if (!isFuture) {
+      weekTotals += total;
+      weekDone += done;
+    }
+    if (!isFuture && pct > bestPct) { bestPct = pct; bestDay = DAYS_TR[d.getDay()]; }
+
+    barData.push({ label: DAYS_TR[d.getDay()], pct: isFuture ? 0 : pct, done, total, future: isFuture });
+
+    const cell = document.createElement('div');
+    cell.className = 'week-day' + (isToday ? ' today' : '');
+    cell.innerHTML = `
+      <div class="wd-name">${DAYS_TR[d.getDay()]}</div>
+      <div class="wd-num">${d.getDate()}</div>
+      <div class="wd-pct"><div class="wd-fill" style="width:${pct}%"></div></div>
+      <div class="wd-score">${isFuture ? '–' : (total > 0 ? pct+'%' : '–')}</div>
+    `;
+    cell.onclick = () => {
+      currentDate = new Date(d);
+      showPage('daily');
     };
-
-    const DEFAULT_SETTINGS = { userName: "", b2Frequency: 1 };
-    const APP_START = "2025-01-01";
-
-    const LINKS = {
-      a1: "https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link",
-      a2: "https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link",
-      b1d1: "https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
-      b1d2: "https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
-      b2: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
-      instagramDaily: "https://www.instagram.com/your_activity/interactions/likes"
-    };
-
-    const DELFT_SERIES = [
-      { id:"delft-1", title:"Delft 1–20", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs", label:"1–20" },
-      { id:"delft-2", title:"Delft 21–33", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs?t=2804", label:"21–33" },
-      { id:"delft-3", title:"Delft 34–42", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs?t=4808", label:"34–42" },
-      { id:"delft-4", title:"Delftse B1 / 1-14", description:"Haftalık", link:"https://youtu.be/tlyK-1vbTYY?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"1-14" },
-      { id:"delft-5", title:"Delftse B1 / 15-28", description:"Haftalık", link:"https://youtu.be/KQDtSWHfi3o?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"15-28" },
-      { id:"delft-6", title:"Delftse B1 / 29-42", description:"Haftalık", link:"https://youtu.be/acKpcHns71I?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"29-42" }
-    ];
-
-    const B2_PARTS = [
-      "B2 / 1-10. sayfa","B2 / 11-20. sayfa","B2 / 21-30. sayfa","B2 / 31-40. sayfa","B2 / 41-50. sayfa",
-      "B2 / 51-60. sayfa","B2 / 61-70. sayfa","B2 / 71-80. sayfa","B2 / 81-90. sayfa","B2 / 91-100. sayfa","B2 / 101-105. sayfa"
-    ];
-
-    const state = {
-      selectedDate: todayISO(),
-      settings: loadJSON(STORAGE_KEYS.settings, DEFAULT_SETTINGS),
-      completions: loadJSON(STORAGE_KEYS.completions, {}),
-      notes: loadJSON(STORAGE_KEYS.notes, {}),
-      ui: loadJSON(STORAGE_KEYS.ui, { activeView: "gunluk" }),
-      manualTasks: loadJSON(STORAGE_KEYS.manualTasks, {}),
-      recurringTasks: loadJSON(STORAGE_KEYS.recurringTasks, [])
-    };
-
-    function todayISO(){ return new Date().toISOString().slice(0,10); }
-    function loadJSON(key, fallback){ try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw):fallback; }catch{return fallback;} }
-    function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
-    function parseLocalDate(iso){ const [y,m,d]=iso.split("-").map(Number); return new Date(y,m-1,d); }
-    function addDays(iso,count){ const dt=parseLocalDate(iso); dt.setDate(dt.getDate()+count); return dt.toISOString().slice(0,10); }
-    function formatDateTR(iso){ return parseLocalDate(iso).toLocaleDateString("tr-TR",{weekday:"long",year:"numeric",month:"long",day:"2-digit"}); }
-    function getWeekStart(iso){ const dt=parseLocalDate(iso); const day=dt.getDay()===0?7:dt.getDay(); dt.setDate(dt.getDate()-(day-1)); return dt.toISOString().slice(0,10); }
-    function esc(text){ return String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
-    function isTaskDone(taskId,dateISO){ return !!state.completions[dateISO]?.[taskId]; }
-    function setTaskDone(taskId,dateISO,done){ if(!state.completions[dateISO]) state.completions[dateISO]={}; state.completions[dateISO][taskId]=done; saveJSON(STORAGE_KEYS.completions,state.completions); }
-
-    function getManualTasks(dateISO){ return (state.manualTasks[dateISO]||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)); }
-    function getRecurringTasks(){ return (state.recurringTasks||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)); }
-
-    function addTask(title,type,dateISO,linkValue){
-      const trimmed=title.trim();
-      const link=(linkValue||"").trim();
-      if(!trimmed) return;
-
-      if(type==="daily"){
-        const maxOrder=state.recurringTasks.length?Math.max(...state.recurringTasks.map(t=>t.order||0)):0;
-        state.recurringTasks.push({
-          id:"recurring-"+Date.now()+"-"+Math.floor(Math.random()*10000),
-          title:trimmed,
-          type:"manual-recurring",
-          description:"",
-          badges:["Her gün"],
-          link,
-          order:maxOrder+1
-        });
-        saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
-      }else{
-        if(!state.manualTasks[dateISO]) state.manualTasks[dateISO]=[];
-        const maxOrder=state.manualTasks[dateISO].length?Math.max(...state.manualTasks[dateISO].map(t=>t.order||0)):0;
-        state.manualTasks[dateISO].push({
-          id:"manual-"+Date.now()+"-"+Math.floor(Math.random()*10000),
-          title:trimmed,
-          type:"manual",
-          description:"",
-          badges:["Tek gün"],
-          link,
-          order:maxOrder+1
-        });
-        saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
-      }
-    }
-
-    function moveManualTask(dateISO,taskId,direction){
-      const sorted=getManualTasks(dateISO);
-      const index=sorted.findIndex(t=>t.id===taskId);
-      if(index===-1) return;
-      const targetIndex=direction==="up"?index-1:index+1;
-      if(targetIndex<0||targetIndex>=sorted.length) return;
-      const current=sorted[index];
-      const target=sorted[targetIndex];
-      const tmp=current.order;
-      current.order=target.order;
-      target.order=tmp;
-      state.manualTasks[dateISO]=sorted;
-      saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
-    }
-
-    function moveRecurringTask(taskId,direction){
-      const sorted=getRecurringTasks();
-      const index=sorted.findIndex(t=>t.id===taskId);
-      if(index===-1) return;
-      const targetIndex=direction==="up"?index-1:index+1;
-      if(targetIndex<0||targetIndex>=sorted.length) return;
-      const current=sorted[index];
-      const target=sorted[targetIndex];
-      const tmp=current.order;
-      current.order=target.order;
-      target.order=tmp;
-      state.recurringTasks=sorted;
-      saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
-    }
-
-    function deleteManualTask(dateISO,taskId){
-      const arr=state.manualTasks[dateISO]||[];
-      state.manualTasks[dateISO]=arr.filter(t=>t.id!==taskId);
-      if(state.completions[dateISO]&&state.completions[dateISO][taskId]){
-        delete state.completions[dateISO][taskId];
-        saveJSON(STORAGE_KEYS.completions,state.completions);
-      }
-      saveJSON(STORAGE_KEYS.manualTasks,state.manualTasks);
-    }
-
-    function deleteRecurringTask(taskId){
-      state.recurringTasks=state.recurringTasks.filter(t=>t.id!==taskId);
-      for(const date in state.completions){
-        if(state.completions[date]&&state.completions[date][taskId]) delete state.completions[date][taskId];
-      }
-      saveJSON(STORAGE_KEYS.completions,state.completions);
-      saveJSON(STORAGE_KEYS.recurringTasks,state.recurringTasks);
-    }
-
-    function getDelftTaskForDate(dateISO){
-      const weekStart=getWeekStart(dateISO);
-
-      const doneTodayId=Object.keys(state.completions[dateISO]||{}).find(taskId =>
-        taskId.startsWith("delft-") && state.completions[dateISO][taskId]
-      );
-
-      if(doneTodayId){
-        const current=DELFT_SERIES.find(x=>x.id===doneTodayId);
-        return {...current,type:"listen",badges:["Delft",current.label]};
-      }
-
-      const alreadyDoneEarlierThisWeek=Object.keys(state.completions).some(date=>{
-        if(date===dateISO) return false;
-        if(getWeekStart(date)!==weekStart) return false;
-        const doneTasks=state.completions[date]||{};
-        return Object.keys(doneTasks).some(taskId=>doneTasks[taskId]&&taskId.startsWith("delft-"));
-      });
-
-      if(alreadyDoneEarlierThisWeek) return null;
-
-      let totalDone=0;
-      for(const date in state.completions){
-        for(const taskId in state.completions[date]){
-          if(state.completions[date][taskId] && taskId.startsWith("delft-")) totalDone++;
-        }
-      }
-
-      const idx=totalDone % DELFT_SERIES.length;
-      const selected=DELFT_SERIES[idx];
-      return {...selected,type:"listen",badges:["Delft",selected.label]};
-    }
-
-    function getWeeklyCarryTask(taskBaseId,title,link,desiredDateISO,weekdayIndex){
-      const weekStart=getWeekStart(desiredDateISO);
-      const scheduled=addDays(weekStart,weekdayIndex-1);
-      const doneToday=isTaskDone(taskBaseId,desiredDateISO);
-      if(desiredDateISO<scheduled) return null;
-
-      const alreadyDoneEarlierThisWeek=Object.keys(state.completions).some(date=>{
-        return date!==desiredDateISO &&
-          getWeekStart(date)===getWeekStart(desiredDateISO) &&
-          state.completions[date] &&
-          state.completions[date][taskBaseId];
-      });
-
-      if(alreadyDoneEarlierThisWeek) return null;
-
-      return {
-        id:taskBaseId,
-        type:"weekly",
-        title,
-        description:"Tekrarlamalı",
-        link,
-        overdue:desiredDateISO>scheduled && !doneToday,
-        badges:["Haftalık"]
-      };
-    }
-
-    function getB2CompletedEntries(){
-      const completedEntries=[];
-      for(const date in state.completions){
-        for(const taskId in state.completions[date]){
-          if(state.completions[date][taskId]&&taskId.startsWith("b2-part-")){
-            completedEntries.push({date,taskId});
-          }
-        }
-      }
-      completedEntries.sort((a,b)=>a.date.localeCompare(b.date));
-      return completedEntries;
-    }
-
-    function getB2TaskForDate(dateISO){
-      const freq=Number(state.settings.b2Frequency||1);
-      const completedEntries=getB2CompletedEntries();
-
-      const todayDone=completedEntries.find(x=>x.date===dateISO);
-      if(todayDone){
-        const idx=Number(todayDone.taskId.replace("b2-part-",""));
-        return { id:"b2-part-"+idx, type:"daily", title:B2_PARTS[idx], description:"Sıradaki parça", link:LINKS.b2, overdue:false, badges:["B2"] };
-      }
-
-      const completedCount=completedEntries.length;
-      const currentIndex=Math.min(completedCount,B2_PARTS.length-1);
-      const availableDate=addDays(APP_START,completedCount*freq);
-      if(dateISO<availableDate) return null;
-
-      return {
-        id:"b2-part-"+currentIndex,
-        type:"daily",
-        title:B2_PARTS[currentIndex],
-        description:"Sıradaki parça",
-        link:LINKS.b2,
-        overdue:dateISO>availableDate,
-        badges:["B2"]
-      };
-    }
-
-    function getRoutineTasksForDate(dateISO){
-      const tasks=[];
-      const day=parseLocalDate(dateISO).getDay();
-
-      tasks.push(
-        { id:"routine-walk", type:"daily", title:"Fullbody yada yürüyüşe çık", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-film", type:"daily", title:"Film izle", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-twitter", type:"daily", title:"Twitter süresini kısalt", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-phone", type:"daily", title:"Telefonu 22.30'da bırak", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-call-message", type:"daily", title:"Birini ara veya mesaj at", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-zikir", type:"daily", title:"Günlük zikirler", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-kuran", type:"daily", title:"Kuran oku", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-instagram", type:"daily", title:"Instagram", description:"", badges:["Günlük","Rutin"], link:LINKS.instagramDaily }
-      );
-
-      if(day===5||day===6||day===0){
-        tasks.push({ id:"routine-instagram-repeat", type:"daily", title:"Instagram tekrar", description:"", badges:["Hafta sonu"] });
-      }
-
-      return tasks;
-    }
-
-    function getAutoTasksForDate(dateISO){
-      const tasks=[];
-      tasks.push(...getRoutineTasksForDate(dateISO));
-
-      const a1=getWeeklyCarryTask("weekly-a1","A1 haftalık tekrar",LINKS.a1,dateISO,1);
-      if(a1) tasks.push(a1);
-
-      const a2=getWeeklyCarryTask("weekly-a2","A2 haftalık tekrar",LINKS.a2,dateISO,4);
-      if(a2) tasks.push(a2);
-
-      const b1d1=getWeeklyCarryTask("weekly-b1-deel1","B1 Deel 1 tekrar",LINKS.b1d1,dateISO,2);
-      if(b1d1) tasks.push(b1d1);
-
-      const b1d2=getWeeklyCarryTask("weekly-b1-deel2","B1 Deel 2 tekrar",LINKS.b1d2,dateISO,5);
-      if(b1d2) tasks.push(b1d2);
-
-      const b2=getB2TaskForDate(dateISO);
-      if(b2) tasks.push(b2);
-
-      const delft=getDelftTaskForDate(dateISO);
-      if(delft) tasks.push(delft);
-
-      return tasks;
-    }
-
-    function getTasksForDate(dateISO){
-      return [...getManualTasks(dateISO), ...getRecurringTasks(), ...getAutoTasksForDate(dateISO)];
-    }
-
-    function renderBadges(task){
-      let html="";
-      if(task.type==="manual") html+=`<span class="badge manual">Kişisel</span>`;
-      if(task.type==="manual-recurring") html+=`<span class="badge recurring">Her gün</span>`;
-      (task.badges||[]).forEach(b=>html+=`<span class="badge">${esc(b)}</span>`);
-      if(task.overdue) html+=`<span class="badge overdue">Gecikmiş</span>`;
-      return html;
-    }
-
-    function renderTaskList(containerId,tasks,dateISO,allowDelete=false){
-      const el=document.getElementById(containerId);
-      if(!tasks.length){
-        el.innerHTML=`<div class="task-item"><div class="task-desc">Görev yok</div></div>`;
-        return;
-      }
-
-      el.innerHTML=tasks.map(task=>{
-        const done=isTaskDone(task.id,dateISO);
-        let deleteButton="";
-        let moveButtons="";
-
-        if(allowDelete && task.type==="manual"){
-          moveButtons=`
-            <button class="btn icon move-up-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↑</button>
-            <button class="btn icon move-down-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↓</button>
-          `;
-          deleteButton=`<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>`;
-        }
-
-        if(allowDelete && task.type==="manual-recurring"){
-          moveButtons=`
-            <button class="btn icon move-up-recurring-btn" data-task-id="${esc(task.id)}">↑</button>
-            <button class="btn icon move-down-recurring-btn" data-task-id="${esc(task.id)}">↓</button>
-          `;
-          deleteButton=`<button class="btn small danger-btn delete-recurring-btn" data-task-id="${esc(task.id)}">Sil</button>`;
-        }
-
-        return `
-          <div class="task-item ${done ? "done" : ""}">
-            <div class="task-row">
-              <div class="task-left">
-                <input class="task-check" type="checkbox" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}" ${done ? "checked" : ""}>
-                <div class="task-main">
-                  <div class="task-title">${esc(task.title)}</div>
-                  ${task.description ? `<div class="task-desc">${esc(task.description)}</div>` : ""}
-                  <div class="badge-row">${renderBadges(task)}</div>
-                </div>
-              </div>
-              <div class="task-actions">
-                ${task.link ? `<a class="link-btn" target="_blank" href="${esc(task.link)}">Kaynağı Aç</a>` : ""}
-                ${moveButtons}
-                ${deleteButton}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      el.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
-        cb.addEventListener("change",e=>{
-          setTaskDone(e.target.dataset.taskId,e.target.dataset.date,e.target.checked);
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".delete-manual-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          deleteManualTask(e.target.dataset.date,e.target.dataset.taskId);
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".delete-recurring-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          deleteRecurringTask(e.target.dataset.taskId);
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".move-up-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          moveManualTask(e.target.dataset.date,e.target.dataset.taskId,"up");
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".move-down-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          moveManualTask(e.target.dataset.date,e.target.dataset.taskId,"down");
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".move-up-recurring-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          moveRecurringTask(e.target.dataset.taskId,"up");
-          renderAll();
-        });
-      });
-
-      el.querySelectorAll(".move-down-recurring-btn").forEach(btn=>{
-        btn.addEventListener("click",e=>{
-          moveRecurringTask(e.target.dataset.taskId,"down");
-          renderAll();
-        });
-      });
-    }
-
-    function renderDaily(){
-      const dateISO=state.selectedDate;
-      document.getElementById("todayLabel").textContent=formatDateTR(dateISO);
-      const tasks=getTasksForDate(dateISO);
-      renderTaskList("dailyTaskList",tasks,dateISO,true);
-
-      const total=tasks.length;
-      const done=tasks.filter(t=>isTaskDone(t.id,dateISO)).length;
-
-      document.getElementById("statTotal").textContent=total;
-      document.getElementById("statDone").textContent=done;
-      document.getElementById("statLeft").textContent=total-done;
-      document.getElementById("dailyNote").value=state.notes[dateISO]||"";
-    }
-
-    function renderWeekly(){
-      const weekStart=getWeekStart(state.selectedDate);
-      const grid=document.getElementById("weeklyGrid");
-      let html="";
-
-      for(let i=0;i<7;i++){
-        const d=addDays(weekStart,i);
-        const tasks=getTasksForDate(d);
-        html+=`
-          <div class="week-day ${d===todayISO() ? "today" : ""}">
-            <h4>${parseLocalDate(d).toLocaleDateString("tr-TR",{weekday:"short",day:"2-digit",month:"2-digit"})}</h4>
-            ${tasks.length ? tasks.map(task=>`<div class="mini-task ${isTaskDone(task.id,d) ? "done" : ""}">${esc(task.title)}</div>`).join("") : `<div class="mini-task">Görev yok</div>`}
-          </div>
-        `;
-      }
-
-      grid.innerHTML=html;
-    }
-
-    function renderWordView(){
-      const dateISO=state.selectedDate;
-      const tasks=getAutoTasksForDate(dateISO).filter(t =>
-        t.id.startsWith("weekly-a1") ||
-        t.id.startsWith("weekly-a2") ||
-        t.id.startsWith("weekly-b1-deel1") ||
-        t.id.startsWith("weekly-b1-deel2") ||
-        t.id.startsWith("b2-part-")
-      );
-      renderTaskList("wordTaskList",tasks,dateISO,false);
-    }
-
-    function renderListeningView(){
-      const task=getDelftTaskForDate(state.selectedDate);
-      renderTaskList("listeningTaskList",task?[task]:[],state.selectedDate,false);
-    }
-
-    function renderSettings(){
-      document.getElementById("userName").value=state.settings.userName||"";
-      document.getElementById("b2Frequency").value=String(state.settings.b2Frequency||1);
-    }
-
-    function renderTabs(){
-      document.querySelectorAll(".tab").forEach(tab=>{
-        tab.classList.toggle("active",tab.dataset.view===state.ui.activeView);
-      });
-      document.querySelectorAll(".view").forEach(view=>view.classList.remove("active"));
-      document.getElementById("view-"+state.ui.activeView).classList.add("active");
-    }
-
-    function renderAll(){
-      document.getElementById("selectedDate").value=state.selectedDate;
-      renderTabs();
-      renderDaily();
-      renderWeekly();
-      renderWordView();
-      renderListeningView();
-      renderSettings();
-    }
-
-    async function sendReport(){
-      const status=document.getElementById("reportStatus");
-      const confirmText=document.getElementById("confirmText").value.trim();
-
-      if(confirmText!=="EVET"){
-        status.textContent='Göndermek için "EVET" yaz';
-        status.className="tiny-note danger";
-        return;
-      }
-
-      if(!FIXED_REPORT_EMAIL || FIXED_REPORT_EMAIL.includes("REDACTED")){
-        status.textContent="Önce sabit mail adresini gir";
-        status.className="tiny-note danger";
-        return;
-      }
-
-      try{
-        status.textContent="Gönderiliyor...";
-        status.className="tiny-note warn";
-
-        await emailjs.send("service_qv6p0ra","template_k524mw5",{
-          to_email: FIXED_REPORT_EMAIL,
-          user_name: state.settings.userName || "Kullanıcı",
-          report_date: state.selectedDate,
-          message: "Günlük rapor"
-        });
-
-        status.textContent="Rapor gönderildi";
-        status.className="tiny-note ok";
-        document.getElementById("confirmText").value="";
-      }catch(err){
-        console.error(err);
-        status.textContent="Mail gönderimi başarısız";
-        status.className="tiny-note danger";
-      }
-    }
-
-    document.getElementById("selectedDate").addEventListener("change",e=>{
-      state.selectedDate=e.target.value;
-      renderAll();
+    grid.appendChild(cell);
+  }
+
+  const avgPct = weekTotals > 0 ? Math.round(weekDone/weekTotals*100) : 0;
+  document.getElementById('weekAvg').textContent = avgPct + '%';
+  document.getElementById('weekBest').textContent = bestDay || '–';
+  document.getElementById('weekBestScore').textContent = bestPct >= 0 ? bestPct + '%' : '';
+  document.getElementById('weekTotal').textContent = weekDone;
+
+  // Streak
+  let streak = 0;
+  for (let i = 0; i <= 30; i++) {
+    const d2 = new Date(today);
+    d2.setDate(today.getDate() - i);
+    const k2 = dateKey(d2);
+    const defs2 = getTaskDefs();
+    const dd2 = defs2.filter(t => t.type === 'everyday');
+    const dy2 = getDayData(k2);
+    const done2 = dd2.filter(t => dy2.tasks[t.id]).length;
+    if (dd2.length > 0 && done2 / dd2.length >= 0.5) streak++;
+    else if (i > 0) break;
+  }
+  document.getElementById('streakCount').textContent = streak;
+
+  // Bar chart
+  const barChart = document.getElementById('barChart');
+  barChart.innerHTML = '';
+  barData.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${b.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${b.pct}%"></div></div>
+      <div class="bar-pct">${b.future ? '–' : (b.total > 0 ? b.pct+'%' : '–')}</div>
+    `;
+    barChart.appendChild(row);
+  });
+
+  // Month calendar
+  renderMonthCal();
+}
+
+function renderMonthCal() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const cal = document.getElementById('monthCalendar');
+  cal.innerHTML = '';
+  // Header
+  DAYS_TR.forEach(d => {
+    const h = document.createElement('div');
+    h.style.cssText = 'text-align:center;font-size:10px;color:var(--text3);padding:3px 0;';
+    h.textContent = d;
+    cal.appendChild(h);
+  });
+  // Empty cells
+  let startDow = firstDay.getDay(); // 0=Sun
+  startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
+  for (let i = 0; i < startDow; i++) {
+    cal.appendChild(document.createElement('div'));
+  }
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    const key = dateKey(date);
+    const isFuture = date > today;
+    const defs = getTaskDefs().filter(t => t.type === 'everyday');
+    const dayData = getDayData(key);
+    const done = isFuture ? 0 : defs.filter(t => dayData.tasks[t.id]).length;
+    const pct = defs.length > 0 ? done/defs.length : 0;
+    const isToday = dateKey(date) === dateKey(today);
+
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      text-align:center;padding:4px 2px;border-radius:6px;font-size:12px;cursor:pointer;
+      background:${isFuture ? 'transparent' : pct >= 0.8 ? 'rgba(67,233,123,0.25)' : pct >= 0.5 ? 'rgba(108,99,255,0.2)' : pct > 0 ? 'rgba(247,151,30,0.15)' : 'rgba(255,255,255,0.03)'};
+      border: ${isToday ? '2px solid var(--accent)' : '1px solid transparent'};
+      color:${isFuture ? 'var(--text3)' : 'var(--text)'};
+      font-weight:${isToday ? '700' : '400'};
+    `;
+    cell.textContent = d;
+    cell.onclick = () => { currentDate = new Date(date); showPage('daily'); };
+    cal.appendChild(cell);
+  }
+}
+
+// ======== STUDY PLAN ========
+const WORD_LISTS = [
+  { id: 'wl_a1', title: 'A1 Kelime Listesi', tag: 'tag-a', link: 'https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link', daysInterval: 7 },
+  { id: 'wl_a2', title: 'A2 Kelime Listesi', tag: 'tag-a', link: 'https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link', daysInterval: 7 },
+];
+const DELFTSE_ITEMS = [
+  { id: 'da2_1', title: 'Delftse A2 – 1-20', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs', daysInterval: 7 },
+  { id: 'da2_2', title: 'Delftse A2 – 21-33', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs?t=2804', daysInterval: 7 },
+  { id: 'da2_3', title: 'Delftse A2 – 34-42', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs?t=4808', daysInterval: 7 },
+  { id: 'db1_1', title: 'Delftse B1 – 1-14', tag: 'tag-b1', link: 'https://youtu.be/tlyK-1vbTYY?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
+  { id: 'db1_2', title: 'Delftse B1 – 15-28', tag: 'tag-b1', link: 'https://youtu.be/KQDtSWHfi3o?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
+  { id: 'db1_3', title: 'Delftse B1 – 29-42', tag: 'tag-b1', link: 'https://youtu.be/acKpcHns71I?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
+];
+const TAAL_ITEMS = [
+  { id: 'taal_1', title: 'Taalcompleet B1 – Deel 1', tag: 'tag-b1', link: 'https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval: 7 },
+  { id: 'taal_2', title: 'Taalcompleet B1 – Deel 2', tag: 'tag-b1', link: 'https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval: 7 },
+];
+const B2_ITEMS = Array.from({length:11}, (_,i) => ({
+  id: `b2_${i+1}`,
+  title: `B2 – ${i*10+1}–${Math.min((i+1)*10, 105)}. sayfa`,
+  tag: 'tag-b2',
+  link: 'https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link',
+  daysInterval: 2
+}));
+
+function getStudyData() {
+  try { return JSON.parse(localStorage.getItem('gunluk_study') || '{}'); } catch(e) { return {}; }
+}
+function saveStudyData(d) {
+  localStorage.setItem('gunluk_study', JSON.stringify(d));
+}
+
+function getNextDue(item, studyData) {
+  const sd = studyData[item.id];
+  if (!sd || !sd.lastDone) return new Date(0); // overdue
+  const last = new Date(sd.lastDone);
+  const next = new Date(last);
+  next.setDate(last.getDate() + (sd.postponed || 0) + item.daysInterval);
+  return next;
+}
+
+function markStudyDone(itemId) {
+  const sd = getStudyData();
+  sd[itemId] = { lastDone: dateKey(new Date()), postponed: 0 };
+  saveStudyData(sd);
+  renderStudy();
+  showToast('Tamamlandı ✓');
+}
+
+function renderStudyList(containerId, items) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const sd = getStudyData();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  items.forEach(item => {
+    const nextDue = getNextDue(item, sd);
+    const isDone = sd[item.id] && dateKey(new Date(sd[item.id].lastDone)) === dateKey(today);
+    const isOverdue = !isDone && nextDue < today;
+    const isDue = !isDone && nextDue <= today;
+    const daysLeft = !isDone ? Math.ceil((nextDue - today) / 86400000) : 0;
+
+    const div = document.createElement('div');
+    div.className = 'study-item' + (isDone ? ' done-item' : isOverdue ? ' overdue' : isDue ? ' due' : '');
+
+    let dotClass = isDone ? 'dot-success' : isOverdue ? 'dot-danger' : isDue ? 'dot-warn' : 'dot-neutral';
+    let statusText = isDone ? '✅ Bugün tamamlandı' :
+      isOverdue ? '⚠️ Gecikmiş' :
+      isDue ? '📌 Bugün yapılmalı' :
+      `${daysLeft} gün sonra`;
+
+    div.innerHTML = `
+      <div class="study-dot ${dotClass}"></div>
+      <div class="study-info">
+        <div class="study-title">${item.title} <span class="tag ${item.tag}" style="margin-left:4px">${item.tag.includes('b2') ? 'B2' : item.tag.includes('b1') ? 'B1' : 'A'}</span></div>
+        <div class="study-sub">${statusText}</div>
+      </div>
+      <a href="${item.link}" target="_blank" class="study-open">Aç</a>
+      ${!isDone ? `<button class="study-done-btn" onclick="markStudyDone('${item.id}')">✓ Tamamla</button>` : ''}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderStudy() {
+  renderStudyList('wordListItems', WORD_LISTS);
+  renderStudyList('delftseItems', DELFTSE_ITEMS);
+  renderStudyList('taalItems', TAAL_ITEMS);
+  renderStudyList('b2Items', B2_ITEMS);
+}
+
+// ======== SETTINGS ========
+function loadSettings() {
+  const s = getSettings();
+  if (s.name) document.getElementById('settingsName').value = s.name;
+  if (s.b2Freq) document.getElementById('b2Freq').value = s.b2Freq;
+}
+function saveSettings() {
+  const s = getSettings();
+  s.name = document.getElementById('settingsName').value.trim();
+  s.b2Freq = document.getElementById('b2Freq').value;
+  saveSettingsData(s);
+  showToast('Ayarlar kaydedildi ✓');
+}
+
+// ======== NAV ========
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const tabs = ['daily','weekly','study','settings'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+
+  if (name === 'daily') renderDaily();
+  if (name === 'weekly') renderWeekly();
+  if (name === 'study') renderStudy();
+  if (name === 'settings') loadSettings();
+}
+
+function changeDay(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  renderDaily();
+}
+
+// ======== REPORT ========
+function confirmSendReport() {
+  openModal('Raporu Gönder', 'Günlük takip raporu e-posta ile gönderilsin mi?', sendReport);
+}
+
+async function sendReport() {
+  closeModal();
+  const key = dateKey(currentDate);
+  const defs = getTaskDefs();
+  const dayData = getDayData(key);
+  const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
+  const done = todayDefs.filter(t => dayData.tasks[t.id]).length;
+  const total = todayDefs.length;
+
+  let taskList = todayDefs.map(t => {
+    const checked = dayData.tasks[t.id] ? '✅' : '❌';
+    return `${checked} ${t.name}`;
+  }).join('\n');
+
+  const msg = `📅 ${key}\n\n✅ ${done}/${total} görev tamamlandı\n\n${taskList}\n\n📝 Not:\n${dayData.note || '(yok)'}`;
+
+  try {
+    await emailjs.send('service_qv6p0ra', 'template_k524mw5', {
+      message: msg,
+      date: key,
+      summary: `${done}/${total} görev`
     });
+    showToast('📧 Rapor gönderildi!');
+  } catch(e) {
+    showToast('Hata: ' + (e.text || 'Gönderilemedi'));
+  }
+}
 
-    document.getElementById("todayBtn").addEventListener("click",()=>{
-      state.selectedDate=todayISO();
-      renderAll();
-    });
+// ======== MODAL ========
+let modalCallback = null;
+function openModal(title, text, cb) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent = text;
+  document.getElementById('modalConfirmBtn').onclick = cb;
+  document.getElementById('modalOverlay').classList.add('show');
+  modalCallback = cb;
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
 
-    document.getElementById("prevDayBtn").addEventListener("click",()=>{
-      state.selectedDate=addDays(state.selectedDate,-1);
-      renderAll();
-    });
+function confirmClear() {
+  openModal('Veriyi Sıfırla', 'Tüm günlük veriler silinecek. Görev tanımları korunur. Devam et?', () => {
+    localStorage.removeItem('gunluk_v3');
+    localStorage.removeItem('gunluk_study');
+    closeModal();
+    renderDaily();
+    showToast('Veri sıfırlandı');
+  });
+}
 
-    document.getElementById("nextDayBtn").addEventListener("click",()=>{
-      state.selectedDate=addDays(state.selectedDate,1);
-      renderAll();
-    });
+// ======== TOAST ========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 
-    document.querySelectorAll(".tab").forEach(tab=>{
-      tab.addEventListener("click",()=>{
-        state.ui.activeView=tab.dataset.view;
-        saveJSON(STORAGE_KEYS.ui,state.ui);
-        renderAll();
-      });
-    });
+// ======== INIT ========
+function initTaskDefs() {
+  const s = getSettings();
+  if (!s.taskDefs) {
+    s.taskDefs = DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order: i}));
+    saveSettingsData(s);
+  }
+}
 
-    document.getElementById("addManualTaskBtn").addEventListener("click",()=>{
-      const input=document.getElementById("manualTaskInput");
-      const type=document.getElementById("manualTaskType").value;
-      const link=document.getElementById("manualTaskLink").value;
-      const value=input.value.trim();
-      if(!value) return;
-
-      addTask(value,type,state.selectedDate,link);
-      input.value="";
-      document.getElementById("manualTaskLink").value="";
-      document.getElementById("manualTaskType").value="once";
-      renderAll();
-    });
-
-    document.getElementById("manualTaskInput").addEventListener("keydown",e=>{
-      if(e.key==="Enter"){
-        e.preventDefault();
-        document.getElementById("addManualTaskBtn").click();
-      }
-    });
-
-    document.getElementById("saveNoteBtn").addEventListener("click",()=>{
-      state.notes[state.selectedDate]=document.getElementById("dailyNote").value.trim();
-      saveJSON(STORAGE_KEYS.notes,state.notes);
-      const status=document.getElementById("noteStatus");
-      status.textContent="Not kaydedildi";
-      status.className="tiny-note ok";
-      setTimeout(()=>{
-        status.textContent="";
-        status.className="tiny-note";
-      },1500);
-    });
-
-    document.getElementById("saveSettingsBtn").addEventListener("click",()=>{
-      state.settings.userName=document.getElementById("userName").value.trim();
-      state.settings.b2Frequency=Number(document.getElementById("b2Frequency").value||1);
-      saveJSON(STORAGE_KEYS.settings,state.settings);
-      const status=document.getElementById("settingsStatus");
-      status.textContent="Ayarlar kaydedildi";
-      status.className="tiny-note ok";
-      renderAll();
-      setTimeout(()=>{
-        status.textContent="";
-        status.className="tiny-note";
-      },1500);
-    });
-
-    document.getElementById("reportToggleBtn").addEventListener("click",()=>{
-      document.getElementById("reportPanel").classList.toggle("open");
-    });
-
-    document.getElementById("sendReportBtn").addEventListener("click",sendReport);
-
-    renderAll();
-  </script>
+initTaskDefs();
+renderDaily();
+</script>
 </body>
 </html>
-```
