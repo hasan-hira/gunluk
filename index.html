@@ -411,6 +411,10 @@
       <div class="section-label">Her gün</div>
       <div id="everydayTasks"></div>
     </div>
+    <div class="task-section" id="studySectionWrap" style="display:none">
+      <div class="section-label">📚 Çalışma planı</div>
+      <div id="studyTasks"></div>
+    </div>
     <div class="task-section">
       <div class="section-label">Sadece bugün</div>
       <div id="dailyTasks"></div>
@@ -476,29 +480,21 @@
 
 <!-- ===== STUDY PAGE ===== -->
 <div class="page" id="page-study">
-
-  <!-- Kelime listesi -->
   <div class="card">
-    <div class="card-title">🔤 Kelime listesi</div>
-    <div id="wordListItems"></div>
+    <div class="card-title">🔤 Kelime listesi <span class="text-sm" style="margin-left:4px;font-weight:400;text-transform:none">haftada 1 kez</span></div>
+    <div id="study_word"></div>
   </div>
-
-  <!-- Delftse series -->
   <div class="card">
-    <div class="card-title">🎧 Delftse – Dinleme planı</div>
-    <div id="delftseItems"></div>
+    <div class="card-title">🎧 Delftse – Dinleme planı <span class="text-sm" style="margin-left:4px;font-weight:400;text-transform:none">haftada 1 kez</span></div>
+    <div id="study_delftse"></div>
   </div>
-
-  <!-- Taalcompleet -->
   <div class="card">
-    <div class="card-title">📖 Taalcompleet B1</div>
-    <div id="taalItems"></div>
+    <div class="card-title">📖 Taalcompleet B1 <span class="text-sm" style="margin-left:4px;font-weight:400;text-transform:none">haftada 1 kez</span></div>
+    <div id="study_taal"></div>
   </div>
-
-  <!-- B2 Plan -->
   <div class="card">
-    <div class="card-title">📗 CodePlus B2 <span class="tag tag-b2" style="margin-left:6px">11 Bölüm</span></div>
-    <div id="b2Items"></div>
+    <div class="card-title">📗 CodePlus B2 <span class="tag tag-b2" style="margin-left:4px">11 Bölüm</span> <span class="text-sm" style="margin-left:4px;font-weight:400;text-transform:none">2 günde bir</span></div>
+    <div id="study_b2"></div>
   </div>
 </div>
 
@@ -553,152 +549,279 @@
 <!-- EmailJS -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-(function(){
-  try { emailjs.init({publicKey:"fD5cr29ZVYp51xJ2T"}); } catch(e){}
-})();
+(function(){ try { emailjs.init({publicKey:"fD5cr29ZVYp51xJ2T"}); } catch(e){} })();
 
-// ======== STATE ========
-const DAYS_TR = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+// ======================================================
+// CONSTANTS
+// ======================================================
+const DAYS_TR   = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 const DAYS_FULL = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
 const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 
-let currentDate = new Date();
-currentDate.setHours(0,0,0,0);
+let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+function dateKey(d){ return d.toISOString().split('T')[0]; }
+const todayKey = () => dateKey(new Date());
 
-function dateKey(d) {
-  return d.toISOString().split('T')[0];
+// ======================================================
+// STUDY SERIES DEFINITIONS
+// Each series = ordered list of steps. One step is "active" at a time.
+// Rule: complete today → next step becomes active tomorrow.
+//       miss today    → same step stays until done.
+// B2: daysInterval=2 → step only shown every 2 days min.
+// ======================================================
+const SERIES = {
+  word: {
+    label: '🔤 Kelime',
+    steps: [
+      { id:'wl_a1', title:'A1 Kelime Listesi', link:'https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link', daysInterval:7 },
+      { id:'wl_a2', title:'A2 Kelime Listesi', link:'https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link', daysInterval:7 },
+    ]
+  },
+  delftse: {
+    label: '🎧 Delftse',
+    steps: [
+      { id:'da2_1', title:'Delftse A2 – 1-20',    link:'https://youtu.be/a8_vN9sj6Cs', daysInterval:7 },
+      { id:'da2_2', title:'Delftse A2 – 21-33',   link:'https://youtu.be/a8_vN9sj6Cs?t=2804', daysInterval:7 },
+      { id:'da2_3', title:'Delftse A2 – 34-42',   link:'https://youtu.be/a8_vN9sj6Cs?t=4808', daysInterval:7 },
+      { id:'db1_1', title:'Delftse B1 – 1-14',    link:'https://youtu.be/tlyK-1vbTYY?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval:7 },
+      { id:'db1_2', title:'Delftse B1 – 15-28',   link:'https://youtu.be/KQDtSWHfi3o?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval:7 },
+      { id:'db1_3', title:'Delftse B1 – 29-42',   link:'https://youtu.be/acKpcHns71I?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval:7 },
+    ]
+  },
+  taal: {
+    label: '📖 Taalcompleet',
+    steps: [
+      { id:'taal_1', title:'Taalcompleet B1 – Deel 1', link:'https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval:7 },
+      { id:'taal_2', title:'Taalcompleet B1 – Deel 2', link:'https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval:7 },
+    ]
+  },
+  b2: {
+    label: '📗 B2',
+    steps: Array.from({length:11}, (_,i) => ({
+      id: `b2_${i+1}`,
+      title: `CodePlus B2 – ${i*10+1}–${Math.min((i+1)*10,105)}. sayfa`,
+      link: 'https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link',
+      daysInterval: 2
+    }))
+  }
+};
+
+// ======================================================
+// STUDY STATE
+// studyState[seriesKey] = { stepIndex: number, lastDoneDate: 'YYYY-MM-DD' | null }
+// ======================================================
+function getStudyState(){
+  try { return JSON.parse(localStorage.getItem('gunluk_study2')||'{}'); } catch(e){ return {}; }
+}
+function saveStudyState(s){ localStorage.setItem('gunluk_study2', JSON.stringify(s)); }
+
+// Get current active step for a series, considering today's date
+function getActiveStep(seriesKey){
+  const series = SERIES[seriesKey];
+  const state  = getStudyState()[seriesKey] || { stepIndex:0, lastDoneDate:null };
+  const idx    = Math.min(state.stepIndex, series.steps.length - 1);
+  return { step: series.steps[idx], idx, lastDoneDate: state.lastDoneDate };
 }
 
-function getData() {
-  try { return JSON.parse(localStorage.getItem('gunluk_v3') || '{}'); } catch(e) { return {}; }
-}
-function saveData(d) {
-  localStorage.setItem('gunluk_v3', JSON.stringify(d));
-}
-
-function getSettings() {
-  try { return JSON.parse(localStorage.getItem('gunluk_settings') || '{}'); } catch(e) { return {}; }
-}
-function saveSettingsData(s) {
-  localStorage.setItem('gunluk_settings', JSON.stringify(s));
+// Is a series step DUE today?
+// Due = (lastDoneDate is null) OR (days since lastDone >= daysInterval)
+function isStepDueToday(seriesKey){
+  const { step, lastDoneDate } = getActiveStep(seriesKey);
+  if (!lastDoneDate) return true; // never done → always due
+  const last = new Date(lastDoneDate); last.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((today - last) / 86400000);
+  return diff >= step.daysInterval;
 }
 
-// ======== TASKS ========
+// Is it done TODAY already?
+function isStepDoneToday(seriesKey){
+  const state = getStudyState()[seriesKey];
+  if (!state || !state.lastDoneDate) return false;
+  return state.lastDoneDate === todayKey();
+}
+
+// Mark step done: advance to next step, record date
+function markSeriesDone(seriesKey){
+  const series = SERIES[seriesKey];
+  const ss = getStudyState();
+  const cur = ss[seriesKey] || { stepIndex:0, lastDoneDate:null };
+  const nextIdx = (cur.stepIndex + 1) % series.steps.length; // cycle
+  ss[seriesKey] = { stepIndex: nextIdx, lastDoneDate: todayKey() };
+  saveStudyState(ss);
+}
+
+// ======================================================
+// STUDY TASK IDs injected into daily tasks
+// These are virtual – not stored in taskDefs, generated on the fly
+// ======================================================
+const SERIES_KEYS = ['word','delftse','taal','b2'];
+function getStudyTasksForToday(){
+  // Returns array of task-like objects for series that are due today
+  return SERIES_KEYS
+    .filter(k => isStepDueToday(k))
+    .map(k => {
+      const { step } = getActiveStep(k);
+      return {
+        id: '__study__' + k,
+        name: SERIES[k].label + ': ' + step.title,
+        link: step.link,
+        type: 'everyday',
+        isStudy: true,
+        seriesKey: k
+      };
+    });
+}
+
+// ======================================================
+// DATA
+// ======================================================
+function getData(){ try { return JSON.parse(localStorage.getItem('gunluk_v3')||'{}'); } catch(e){ return {}; } }
+function saveData(d){ localStorage.setItem('gunluk_v3', JSON.stringify(d)); }
+function getSettings(){ try { return JSON.parse(localStorage.getItem('gunluk_settings')||'{}'); } catch(e){ return {}; } }
+function saveSettingsData(s){ localStorage.setItem('gunluk_settings', JSON.stringify(s)); }
+
 const DEFAULT_EVERYDAY_TASKS = [
-  { id: 'sport',    name: '🏋️ Fullbody veya yürüyüş', type: 'everyday', link: '' },
-  { id: 'film',     name: '🎬 Film izle', type: 'everyday', link: '' },
-  { id: 'twitter',  name: '🐦 Twitter süresini kısalt', type: 'everyday', link: '' },
-  { id: 'phone',    name: '📵 Telefonu 22:30\'da bırak', type: 'everyday', link: '' },
-  { id: 'call',     name: '📞 Birini ara veya mesaj at', type: 'everyday', link: '' },
-  { id: 'zikir',    name: '📿 Günlük zikirler', type: 'everyday', link: '' },
-  { id: 'quran',    name: '📖 Kuran oku', type: 'everyday', link: '' },
-  { id: 'insta',    name: '📱 Instagram', type: 'everyday', link: 'https://www.instagram.com/your_activity/interactions/likes' },
+  { id:'sport',   name:'🏋️ Fullbody veya yürüyüşe çık', type:'everyday', link:'' },
+  { id:'film',    name:'🎬 Film izle',                    type:'everyday', link:'' },
+  { id:'twitter', name:'🐦 Twitter süresini kısalt',      type:'everyday', link:'' },
+  { id:'phone',   name:'📵 Telefonu 22:30\'da bırak',     type:'everyday', link:'' },
+  { id:'call',    name:'📞 Birini ara veya mesaj at',      type:'everyday', link:'' },
+  { id:'zikir',   name:'📿 Günlük zikirler',              type:'everyday', link:'' },
+  { id:'quran',   name:'📖 Kuran oku',                    type:'everyday', link:'' },
+  { id:'insta',   name:'📱 Instagram',                    type:'everyday', link:'https://www.instagram.com/your_activity/interactions/likes' },
 ];
 
-function getTaskDefs() {
+function getTaskDefs(){
   const s = getSettings();
-  return s.taskDefs || DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order: i}));
+  return s.taskDefs || DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order:i}));
 }
-function saveTaskDefs(defs) {
-  const s = getSettings();
-  s.taskDefs = defs;
-  saveSettingsData(s);
+function saveTaskDefs(defs){
+  const s = getSettings(); s.taskDefs = defs; saveSettingsData(s);
 }
 
-function getDayData(dateStr) {
+function getDayData(dateStr){
   const d = getData();
-  if (!d[dateStr]) d[dateStr] = { tasks: {}, note: '' };
+  if (!d[dateStr]) d[dateStr] = { tasks:{}, note:'' };
   return d[dateStr];
 }
-function saveDayData(dateStr, dayData) {
-  const d = getData();
-  d[dateStr] = dayData;
-  saveData(d);
+function saveDayData(dateStr, dayData){
+  const d = getData(); d[dateStr] = dayData; saveData(d);
 }
 
-// ======== RENDER DAILY ========
-function renderDaily() {
+// ======================================================
+// DAILY RENDER
+// ======================================================
+function getAllTasksForDay(dateStr){
+  const defs = getTaskDefs();
+  const isToday = dateStr === todayKey();
+
+  // Manual everyday tasks
+  const everyday = defs.filter(t => t.type==='everyday').sort((a,b)=>(a.order||0)-(b.order||0));
+
+  // Manual daily-only tasks for this specific date
+  const daily = defs.filter(t => t.type==='daily' && t.dateAdded === dateStr).sort((a,b)=>(a.order||0)-(b.order||0));
+
+  // Study tasks — only inject for today (past days keep their stored state)
+  const study = isToday ? getStudyTasksForToday() : [];
+
+  return { everyday, daily, study };
+}
+
+function renderDaily(){
   const key = dateKey(currentDate);
   const dayData = getDayData(key);
-  const defs = getTaskDefs();
 
-  // Date display
+  // Date header
   document.getElementById('dayName').textContent = DAYS_FULL[currentDate.getDay()];
-  const isToday = dateKey(currentDate) === dateKey(new Date());
+  const isToday = key === todayKey();
   document.getElementById('dayFull').textContent =
     (isToday ? '📍 ' : '') +
     currentDate.getDate() + ' ' + MONTHS_TR[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
 
-  const everydayDefs = defs.filter(t => t.type === 'everyday').sort((a,b) => (a.order||0)-(b.order||0));
-  const dailyDefs = defs.filter(t => t.type === 'daily' || (t.dateAdded && t.dateAdded !== 'permanent')).sort((a,b) => (a.order||0)-(b.order||0));
-  // For 'daily' tasks only show if added on this date or if permanent
-  const todayDailyDefs = defs.filter(t => t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)).sort((a,b) => (a.order||0)-(b.order||0));
+  const { everyday, daily, study } = getAllTasksForDay(key);
+  const defs = getTaskDefs();
 
-  renderTaskList('everydayTasks', everydayDefs, dayData.tasks, key, defs);
-  renderTaskList('dailyTasks', todayDailyDefs, dayData.tasks, key, defs);
+  renderTaskList('everydayTasks', everyday,  dayData.tasks, key, defs, false);
+  renderTaskList('studyTasks',    study,     dayData.tasks, key, defs, true);
+  renderTaskList('dailyTasks',    daily,     dayData.tasks, key, defs, false);
 
-  updateSummary(defs, dayData.tasks, key);
+  // show/hide study section label
+  document.getElementById('studySectionWrap').style.display = study.length ? 'block' : 'none';
 
+  updateSummary(key, dayData);
   document.getElementById('noteArea').value = dayData.note || '';
 }
 
-function renderTaskList(containerId, taskDefs, taskState, key, allDefs) {
+function renderTaskList(containerId, taskDefs, taskState, key, allDefs, isStudy){
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-  if (taskDefs.length === 0) {
-    container.innerHTML = '<div class="text-sm" style="padding:6px 0;">Görev yok</div>';
+  if (taskDefs.length === 0){
+    if (isStudy) return;
+    container.innerHTML = '<div class="text-sm" style="padding:6px 0;color:var(--text3);">Görev yok</div>';
     return;
   }
   taskDefs.forEach((t, i) => {
     const done = !!taskState[t.id];
     const div = document.createElement('div');
     div.className = 'task-item' + (done ? ' completed' : '');
-    div.dataset.id = t.id;
 
     const linkHtml = t.link
-      ? `<a href="${t.link}" target="_blank" class="task-link">Aç</a>`
+      ? `<a href="${encodeURI(t.link).replace(/'/g,"'")}" target="_blank" class="task-link">Aç</a>`
       : '';
 
-    const idx = allDefs.findIndex(d => d.id === t.id);
     const isFirst = i === 0;
-    const isLast = i === taskDefs.length - 1;
+    const isLast  = i === taskDefs.length - 1;
+
+    // Study tasks: no move/delete buttons (they're auto-managed)
+    const actionsHtml = isStudy ? '' : `
+      <div class="task-actions">
+        <button class="task-btn" onclick="moveTask('${t.id}','up')"   title="Yukarı" ${isFirst?'style="opacity:0.3" disabled':''}>↑</button>
+        <button class="task-btn" onclick="moveTask('${t.id}','down')" title="Aşağı"  ${isLast ?'style="opacity:0.3" disabled':''}>↓</button>
+        <button class="task-btn delete" onclick="confirmDeleteTask('${t.id}')" title="Sil">🗑</button>
+      </div>`;
 
     div.innerHTML = `
-      <div class="task-check" onclick="toggleTask('${t.id}','${key}')">
+      <div class="task-check" onclick="toggleTask('${t.id}','${key}','${isStudy ? t.seriesKey : ''}')">
         <span class="task-check-inner">✓</span>
       </div>
       <div class="task-name">${t.name}</div>
       ${linkHtml}
-      <div class="task-actions">
-        <button class="task-btn" onclick="moveTask('${t.id}','up')" title="Yukarı" ${isFirst?'disabled style="opacity:0.3"':''}>↑</button>
-        <button class="task-btn" onclick="moveTask('${t.id}','down')" title="Aşağı" ${isLast?'disabled style="opacity:0.3"':''}>↓</button>
-        <button class="task-btn delete" onclick="deleteTask('${t.id}')" title="Sil">🗑</button>
-      </div>
+      ${actionsHtml}
     `;
     container.appendChild(div);
   });
 }
 
-function toggleTask(taskId, dateKey_) {
-  const dayData = getDayData(dateKey_);
-  dayData.tasks[taskId] = !dayData.tasks[taskId];
-  saveDayData(dateKey_, dayData);
+function toggleTask(taskId, key, seriesKey){
+  const dayData = getDayData(key);
+  const newVal  = !dayData.tasks[taskId];
+  dayData.tasks[taskId] = newVal;
+  saveDayData(key, dayData);
+
+  // If it's a study task being checked ON → mark series done
+  if (seriesKey && newVal){
+    markSeriesDone(seriesKey);
+  }
+  // If unchecked (undo), we leave studyState as-is (already advanced).
+  // User can manually manage from Study tab if needed.
   renderDaily();
 }
 
-function updateSummary(defs, taskState, key) {
-  const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
-  const total = todayDefs.length;
-  const done = todayDefs.filter(t => taskState[t.id]).length;
-  const left = total - done;
-  const pct = total > 0 ? Math.round(done/total*100) : 0;
+function updateSummary(key, dayData){
+  const { everyday, daily, study } = getAllTasksForDay(key);
+  const allTasks = [...everyday, ...daily, ...study];
+  const total = allTasks.length;
+  const done  = allTasks.filter(t => dayData.tasks[t.id]).length;
+  const left  = total - done;
+  const pct   = total > 0 ? Math.round(done/total*100) : 0;
   document.getElementById('totalCount').textContent = total;
-  document.getElementById('doneCount').textContent = done;
-  document.getElementById('leftCount').textContent = left;
+  document.getElementById('doneCount').textContent  = done;
+  document.getElementById('leftCount').textContent  = left;
   document.getElementById('progressFill').style.width = pct + '%';
 }
 
-function addTask() {
+function addTask(){
   const name = document.getElementById('newTaskName').value.trim();
   if (!name) return;
   const link = document.getElementById('newTaskLink').value.trim();
@@ -716,9 +839,20 @@ function addTask() {
   showToast('Görev eklendi ✓');
 }
 
-function deleteTask(taskId) {
+// Delete with confirmation
+function confirmDeleteTask(taskId){
   const defs = getTaskDefs();
-  const idx = defs.findIndex(d => d.id === taskId);
+  const task = defs.find(d => d.id === taskId);
+  if (!task) return;
+  openModal(
+    'Görevi Sil',
+    `"${task.name}" silinsin mi? Bu işlem geri alınamaz.`,
+    () => { doDeleteTask(taskId); closeModal(); }
+  );
+}
+function doDeleteTask(taskId){
+  const defs = getTaskDefs();
+  const idx  = defs.findIndex(d => d.id === taskId);
   if (idx < 0) return;
   defs.splice(idx, 1);
   saveTaskDefs(defs);
@@ -726,23 +860,18 @@ function deleteTask(taskId) {
   showToast('Görev silindi');
 }
 
-function moveTask(taskId, dir) {
-  const defs = getTaskDefs();
-  const type = defs.find(d => d.id === taskId)?.type || 'everyday';
+function moveTask(taskId, dir){
+  const defs    = getTaskDefs();
+  const type    = defs.find(d => d.id === taskId)?.type || 'everyday';
   const sameType = defs.filter(d => d.type === type).sort((a,b) => (a.order||0)-(b.order||0));
-  const idx = sameType.findIndex(d => d.id === taskId);
-  if (dir === 'up' && idx > 0) {
-    const a = sameType[idx], b = sameType[idx-1];
-    const tmp = a.order; a.order = b.order; b.order = tmp;
-  } else if (dir === 'down' && idx < sameType.length - 1) {
-    const a = sameType[idx], b = sameType[idx+1];
-    const tmp = a.order; a.order = b.order; b.order = tmp;
-  }
+  const idx     = sameType.findIndex(d => d.id === taskId);
+  if (dir === 'up'   && idx > 0)                  { [sameType[idx].order, sameType[idx-1].order] = [sameType[idx-1].order, sameType[idx].order]; }
+  if (dir === 'down' && idx < sameType.length - 1){ [sameType[idx].order, sameType[idx+1].order] = [sameType[idx+1].order, sameType[idx].order]; }
   saveTaskDefs(defs);
   renderDaily();
 }
 
-function saveNote() {
+function saveNote(){
   const key = dateKey(currentDate);
   const dayData = getDayData(key);
   dayData.note = document.getElementById('noteArea').value;
@@ -750,41 +879,38 @@ function saveNote() {
   showToast('Not kaydedildi ✓');
 }
 
-// ======== WEEKLY ========
-function renderWeekly() {
+// ======================================================
+// WEEKLY
+// ======================================================
+function getTotalAndDoneForDay(dateStr){
+  const { everyday, daily, study } = getAllTasksForDay(dateStr);
+  const all = [...everyday, ...daily, ...study];
+  const dayData = getDayData(dateStr);
+  return { total: all.length, done: all.filter(t => dayData.tasks[t.id]).length };
+}
+
+function renderWeekly(){
   const today = new Date(); today.setHours(0,0,0,0);
-  // Get Monday of this week
-  const day = today.getDay();
+  const dow = today.getDay();
   const monday = new Date(today);
-  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
 
   const grid = document.getElementById('weekGrid');
   grid.innerHTML = '';
 
-  let weekTotals = 0, weekDone = 0, bestDay = null, bestPct = -1;
+  let weekTotal = 0, weekDone = 0, bestDay = null, bestPct = -1;
   const barData = [];
 
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+  for (let i = 0; i < 7; i++){
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
     const key = dateKey(d);
-    const isToday = dateKey(d) === dateKey(today);
+    const isToday  = key === todayKey();
     const isFuture = d > today;
-
-    const defs = getTaskDefs();
-    const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
-    const dayData = getDayData(key);
-    const total = todayDefs.length;
-    const done = isFuture ? 0 : todayDefs.filter(t => dayData.tasks[t.id]).length;
+    const { total, done } = isFuture ? {total:0,done:0} : getTotalAndDoneForDay(key);
     const pct = total > 0 ? Math.round(done/total*100) : 0;
-
-    if (!isFuture) {
-      weekTotals += total;
-      weekDone += done;
-    }
-    if (!isFuture && pct > bestPct) { bestPct = pct; bestDay = DAYS_TR[d.getDay()]; }
-
-    barData.push({ label: DAYS_TR[d.getDay()], pct: isFuture ? 0 : pct, done, total, future: isFuture });
+    if (!isFuture){ weekTotal += total; weekDone += done; }
+    if (!isFuture && pct > bestPct){ bestPct = pct; bestDay = DAYS_TR[d.getDay()]; }
+    barData.push({ label: DAYS_TR[d.getDay()], pct, total, future: isFuture });
 
     const cell = document.createElement('div');
     cell.className = 'week-day' + (isToday ? ' today' : '');
@@ -792,37 +918,30 @@ function renderWeekly() {
       <div class="wd-name">${DAYS_TR[d.getDay()]}</div>
       <div class="wd-num">${d.getDate()}</div>
       <div class="wd-pct"><div class="wd-fill" style="width:${pct}%"></div></div>
-      <div class="wd-score">${isFuture ? '–' : (total > 0 ? pct+'%' : '–')}</div>
-    `;
-    cell.onclick = () => {
-      currentDate = new Date(d);
-      showPage('daily');
-    };
+      <div class="wd-score">${isFuture ? '–' : (total > 0 ? pct+'%' : '–')}</div>`;
+    cell.onclick = () => { currentDate = new Date(d); showPage('daily'); };
     grid.appendChild(cell);
   }
 
-  const avgPct = weekTotals > 0 ? Math.round(weekDone/weekTotals*100) : 0;
-  document.getElementById('weekAvg').textContent = avgPct + '%';
-  document.getElementById('weekBest').textContent = bestDay || '–';
-  document.getElementById('weekBestScore').textContent = bestPct >= 0 ? bestPct + '%' : '';
-  document.getElementById('weekTotal').textContent = weekDone;
+  const avgPct = weekTotal > 0 ? Math.round(weekDone/weekTotal*100) : 0;
+  document.getElementById('weekAvg').textContent       = avgPct + '%';
+  document.getElementById('weekBest').textContent      = bestDay || '–';
+  document.getElementById('weekBestScore').textContent = bestPct >= 0 ? bestPct+'%' : '';
+  document.getElementById('weekTotal').textContent     = weekDone;
 
   // Streak
   let streak = 0;
-  for (let i = 0; i <= 30; i++) {
-    const d2 = new Date(today);
-    d2.setDate(today.getDate() - i);
+  for (let i = 0; i <= 60; i++){
+    const d2 = new Date(today); d2.setDate(today.getDate() - i);
     const k2 = dateKey(d2);
-    const defs2 = getTaskDefs();
-    const dd2 = defs2.filter(t => t.type === 'everyday');
+    const everyday = getTaskDefs().filter(t => t.type==='everyday');
     const dy2 = getDayData(k2);
-    const done2 = dd2.filter(t => dy2.tasks[t.id]).length;
-    if (dd2.length > 0 && done2 / dd2.length >= 0.5) streak++;
+    const done2 = everyday.filter(t => dy2.tasks[t.id]).length;
+    if (everyday.length > 0 && done2/everyday.length >= 0.5) streak++;
     else if (i > 0) break;
   }
   document.getElementById('streakCount').textContent = streak;
 
-  // Bar chart
   const barChart = document.getElementById('barChart');
   barChart.innerHTML = '';
   barData.forEach(b => {
@@ -831,258 +950,206 @@ function renderWeekly() {
     row.innerHTML = `
       <div class="bar-label">${b.label}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${b.pct}%"></div></div>
-      <div class="bar-pct">${b.future ? '–' : (b.total > 0 ? b.pct+'%' : '–')}</div>
-    `;
+      <div class="bar-pct">${b.future ? '–' : (b.total > 0 ? b.pct+'%' : '–')}</div>`;
     barChart.appendChild(row);
   });
 
-  // Month calendar
   renderMonthCal();
 }
 
-function renderMonthCal() {
+function renderMonthCal(){
   const today = new Date(); today.setHours(0,0,0,0);
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const year = today.getFullYear(), month = today.getMonth();
   const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
+  const lastDay  = new Date(year, month+1, 0);
   const cal = document.getElementById('monthCalendar');
   cal.innerHTML = '';
-  // Header
   DAYS_TR.forEach(d => {
     const h = document.createElement('div');
     h.style.cssText = 'text-align:center;font-size:10px;color:var(--text3);padding:3px 0;';
-    h.textContent = d;
-    cal.appendChild(h);
+    h.textContent = d; cal.appendChild(h);
   });
-  // Empty cells
-  let startDow = firstDay.getDay(); // 0=Sun
-  startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
-  for (let i = 0; i < startDow; i++) {
-    cal.appendChild(document.createElement('div'));
-  }
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const date = new Date(year, month, d);
-    const key = dateKey(date);
+  let startDow = firstDay.getDay(); startDow = startDow===0 ? 6 : startDow-1;
+  for (let i=0;i<startDow;i++) cal.appendChild(document.createElement('div'));
+  for (let dn=1; dn<=lastDay.getDate(); dn++){
+    const date = new Date(year, month, dn);
+    const key  = dateKey(date);
     const isFuture = date > today;
-    const defs = getTaskDefs().filter(t => t.type === 'everyday');
-    const dayData = getDayData(key);
-    const done = isFuture ? 0 : defs.filter(t => dayData.tasks[t.id]).length;
-    const pct = defs.length > 0 ? done/defs.length : 0;
-    const isToday = dateKey(date) === dateKey(today);
-
+    const isToday  = key === todayKey();
+    const { total, done } = isFuture ? {total:1,done:0} : getTotalAndDoneForDay(key);
+    const pct = total > 0 ? done/total : 0;
     const cell = document.createElement('div');
-    cell.style.cssText = `
-      text-align:center;padding:4px 2px;border-radius:6px;font-size:12px;cursor:pointer;
-      background:${isFuture ? 'transparent' : pct >= 0.8 ? 'rgba(67,233,123,0.25)' : pct >= 0.5 ? 'rgba(108,99,255,0.2)' : pct > 0 ? 'rgba(247,151,30,0.15)' : 'rgba(255,255,255,0.03)'};
-      border: ${isToday ? '2px solid var(--accent)' : '1px solid transparent'};
-      color:${isFuture ? 'var(--text3)' : 'var(--text)'};
-      font-weight:${isToday ? '700' : '400'};
-    `;
-    cell.textContent = d;
+    cell.style.cssText = `text-align:center;padding:4px 2px;border-radius:6px;font-size:12px;cursor:pointer;
+      background:${isFuture?'transparent':pct>=0.8?'rgba(67,233,123,0.25)':pct>=0.5?'rgba(108,99,255,0.2)':pct>0?'rgba(247,151,30,0.15)':'rgba(255,255,255,0.03)'};
+      border:${isToday?'2px solid var(--accent)':'1px solid transparent'};
+      color:${isFuture?'var(--text3)':'var(--text)'};font-weight:${isToday?'700':'400'};`;
+    cell.textContent = dn;
     cell.onclick = () => { currentDate = new Date(date); showPage('daily'); };
     cal.appendChild(cell);
   }
 }
 
-// ======== STUDY PLAN ========
-const WORD_LISTS = [
-  { id: 'wl_a1', title: 'A1 Kelime Listesi', tag: 'tag-a', link: 'https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link', daysInterval: 7 },
-  { id: 'wl_a2', title: 'A2 Kelime Listesi', tag: 'tag-a', link: 'https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link', daysInterval: 7 },
-];
-const DELFTSE_ITEMS = [
-  { id: 'da2_1', title: 'Delftse A2 – 1-20', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs', daysInterval: 7 },
-  { id: 'da2_2', title: 'Delftse A2 – 21-33', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs?t=2804', daysInterval: 7 },
-  { id: 'da2_3', title: 'Delftse A2 – 34-42', tag: 'tag-delft', link: 'https://youtu.be/a8_vN9sj6Cs?t=4808', daysInterval: 7 },
-  { id: 'db1_1', title: 'Delftse B1 – 1-14', tag: 'tag-b1', link: 'https://youtu.be/tlyK-1vbTYY?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
-  { id: 'db1_2', title: 'Delftse B1 – 15-28', tag: 'tag-b1', link: 'https://youtu.be/KQDtSWHfi3o?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
-  { id: 'db1_3', title: 'Delftse B1 – 29-42', tag: 'tag-b1', link: 'https://youtu.be/acKpcHns71I?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER', daysInterval: 7 },
-];
-const TAAL_ITEMS = [
-  { id: 'taal_1', title: 'Taalcompleet B1 – Deel 1', tag: 'tag-b1', link: 'https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval: 7 },
-  { id: 'taal_2', title: 'Taalcompleet B1 – Deel 2', tag: 'tag-b1', link: 'https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true', daysInterval: 7 },
-];
-const B2_ITEMS = Array.from({length:11}, (_,i) => ({
-  id: `b2_${i+1}`,
-  title: `B2 – ${i*10+1}–${Math.min((i+1)*10, 105)}. sayfa`,
-  tag: 'tag-b2',
-  link: 'https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link',
-  daysInterval: 2
-}));
+// ======================================================
+// STUDY PAGE
+// ======================================================
+function renderStudy(){
+  SERIES_KEYS.forEach(k => {
+    const containerId = 'study_'+k;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    const series = SERIES[k];
+    const dueToday = isStepDueToday(k);
+    const doneToday = isStepDoneToday(k);
+    const { step, idx, lastDoneDate } = getActiveStep(k);
+    const state = getStudyState()[k] || { stepIndex:0, lastDoneDate:null };
 
-function getStudyData() {
-  try { return JSON.parse(localStorage.getItem('gunluk_study') || '{}'); } catch(e) { return {}; }
-}
-function saveStudyData(d) {
-  localStorage.setItem('gunluk_study', JSON.stringify(d));
+    let daysLeft = '–';
+    if (lastDoneDate){
+      const last = new Date(lastDoneDate); last.setHours(0,0,0,0);
+      const today2 = new Date(); today2.setHours(0,0,0,0);
+      const diff = Math.round((today2-last)/86400000);
+      const remaining = step.daysInterval - diff;
+      daysLeft = remaining > 0 ? remaining + ' gün sonra' : '📌 Bugün';
+    } else {
+      daysLeft = '📌 Başlanmadı';
+    }
+
+    const statusText = doneToday ? '✅ Bugün tamamlandı' :
+                       dueToday  ? (lastDoneDate ? '📌 Bugün yapılmalı' : '📌 Başlanmadı') :
+                       daysLeft;
+
+    const statusClass = doneToday ? 'dot-success' : dueToday ? 'dot-warn' : 'dot-neutral';
+
+    // Show all steps, highlight active
+    series.steps.forEach((s, si) => {
+      const isActive = si === idx;
+      const isDoneStep = si < idx || (si === idx && doneToday);
+      const div = document.createElement('div');
+      div.className = 'study-item' + (isDoneStep && !isActive ? ' done-item' : isActive && dueToday && !doneToday ? ' due' : '');
+      div.style.opacity = (!isActive && !isDoneStep) ? '0.4' : '1';
+      div.innerHTML = `
+        <div class="study-dot ${isActive ? statusClass : isDoneStep ? 'dot-success' : 'dot-neutral'}"></div>
+        <div class="study-info">
+          <div class="study-title">${s.title} ${isActive ? '<span style="font-size:10px;background:rgba(108,99,255,0.2);color:var(--accent);padding:2px 6px;border-radius:5px;margin-left:4px;">aktif</span>' : ''}</div>
+          ${isActive ? `<div class="study-sub">${statusText}</div>` : ''}
+        </div>
+        <a href="${s.link}" target="_blank" class="study-open">Aç</a>
+        ${isActive && !doneToday ? `<button class="study-done-btn" onclick="markStudyDoneFromTab('${k}')">✓ Tamamla</button>` : ''}
+      `;
+      container.appendChild(div);
+    });
+  });
 }
 
-function getNextDue(item, studyData) {
-  const sd = studyData[item.id];
-  if (!sd || !sd.lastDone) return new Date(0); // overdue
-  const last = new Date(sd.lastDone);
-  const next = new Date(last);
-  next.setDate(last.getDate() + (sd.postponed || 0) + item.daysInterval);
-  return next;
-}
-
-function markStudyDone(itemId) {
-  const sd = getStudyData();
-  sd[itemId] = { lastDone: dateKey(new Date()), postponed: 0 };
-  saveStudyData(sd);
+function markStudyDoneFromTab(seriesKey){
+  // Mark in studyState
+  markSeriesDone(seriesKey);
+  // Also tick off in today's task list
+  const key = todayKey();
+  const dayData = getDayData(key);
+  dayData.tasks['__study__' + seriesKey] = true;
+  saveDayData(key, dayData);
   renderStudy();
   showToast('Tamamlandı ✓');
 }
 
-function renderStudyList(containerId, items) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  const sd = getStudyData();
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  items.forEach(item => {
-    const nextDue = getNextDue(item, sd);
-    const isDone = sd[item.id] && dateKey(new Date(sd[item.id].lastDone)) === dateKey(today);
-    const isOverdue = !isDone && nextDue < today;
-    const isDue = !isDone && nextDue <= today;
-    const daysLeft = !isDone ? Math.ceil((nextDue - today) / 86400000) : 0;
-
-    const div = document.createElement('div');
-    div.className = 'study-item' + (isDone ? ' done-item' : isOverdue ? ' overdue' : isDue ? ' due' : '');
-
-    let dotClass = isDone ? 'dot-success' : isOverdue ? 'dot-danger' : isDue ? 'dot-warn' : 'dot-neutral';
-    let statusText = isDone ? '✅ Bugün tamamlandı' :
-      isOverdue ? '⚠️ Gecikmiş' :
-      isDue ? '📌 Bugün yapılmalı' :
-      `${daysLeft} gün sonra`;
-
-    div.innerHTML = `
-      <div class="study-dot ${dotClass}"></div>
-      <div class="study-info">
-        <div class="study-title">${item.title} <span class="tag ${item.tag}" style="margin-left:4px">${item.tag.includes('b2') ? 'B2' : item.tag.includes('b1') ? 'B1' : 'A'}</span></div>
-        <div class="study-sub">${statusText}</div>
-      </div>
-      <a href="${item.link}" target="_blank" class="study-open">Aç</a>
-      ${!isDone ? `<button class="study-done-btn" onclick="markStudyDone('${item.id}')">✓ Tamamla</button>` : ''}
-    `;
-    container.appendChild(div);
-  });
-}
-
-function renderStudy() {
-  renderStudyList('wordListItems', WORD_LISTS);
-  renderStudyList('delftseItems', DELFTSE_ITEMS);
-  renderStudyList('taalItems', TAAL_ITEMS);
-  renderStudyList('b2Items', B2_ITEMS);
-}
-
-// ======== SETTINGS ========
-function loadSettings() {
+// ======================================================
+// SETTINGS
+// ======================================================
+function loadSettings(){
   const s = getSettings();
-  if (s.name) document.getElementById('settingsName').value = s.name;
+  if (s.name)   document.getElementById('settingsName').value = s.name;
   if (s.b2Freq) document.getElementById('b2Freq').value = s.b2Freq;
 }
-function saveSettings() {
+function saveSettings(){
   const s = getSettings();
-  s.name = document.getElementById('settingsName').value.trim();
+  s.name   = document.getElementById('settingsName').value.trim();
   s.b2Freq = document.getElementById('b2Freq').value;
   saveSettingsData(s);
   showToast('Ayarlar kaydedildi ✓');
 }
 
-// ======== NAV ========
-function showPage(name) {
+// ======================================================
+// NAV
+// ======================================================
+function showPage(name){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const tabs = ['daily','weekly','study','settings'];
-  const idx = tabs.indexOf(name);
-  if (idx >= 0) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
-
-  if (name === 'daily') renderDaily();
-  if (name === 'weekly') renderWeekly();
-  if (name === 'study') renderStudy();
-  if (name === 'settings') loadSettings();
+  document.getElementById('page-'+name).classList.add('active');
+  ['daily','weekly','study','settings'].forEach((n,i) => {
+    if (n===name) document.querySelectorAll('.nav-tab')[i].classList.add('active');
+  });
+  if (name==='daily')    renderDaily();
+  if (name==='weekly')   renderWeekly();
+  if (name==='study')    renderStudy();
+  if (name==='settings') loadSettings();
 }
 
-function changeDay(delta) {
+function changeDay(delta){
   currentDate.setDate(currentDate.getDate() + delta);
   renderDaily();
 }
 
-// ======== REPORT ========
-function confirmSendReport() {
-  openModal('Raporu Gönder', 'Günlük takip raporu e-posta ile gönderilsin mi?', sendReport);
-}
-
-async function sendReport() {
-  closeModal();
-  const key = dateKey(currentDate);
-  const defs = getTaskDefs();
-  const dayData = getDayData(key);
-  const todayDefs = defs.filter(t => t.type === 'everyday' || (t.type === 'daily' && (!t.dateAdded || t.dateAdded === key)));
-  const done = todayDefs.filter(t => dayData.tasks[t.id]).length;
-  const total = todayDefs.length;
-
-  let taskList = todayDefs.map(t => {
-    const checked = dayData.tasks[t.id] ? '✅' : '❌';
-    return `${checked} ${t.name}`;
-  }).join('\n');
-
-  const msg = `📅 ${key}\n\n✅ ${done}/${total} görev tamamlandı\n\n${taskList}\n\n📝 Not:\n${dayData.note || '(yok)'}`;
-
-  try {
-    await emailjs.send('service_qv6p0ra', 'template_k524mw5', {
-      message: msg,
-      date: key,
-      summary: `${done}/${total} görev`
-    });
-    showToast('📧 Rapor gönderildi!');
-  } catch(e) {
-    showToast('Hata: ' + (e.text || 'Gönderilemedi'));
-  }
-}
-
-// ======== MODAL ========
-let modalCallback = null;
-function openModal(title, text, cb) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalText').textContent = text;
-  document.getElementById('modalConfirmBtn').onclick = cb;
-  document.getElementById('modalOverlay').classList.add('show');
-  modalCallback = cb;
-}
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-}
-
-function confirmClear() {
-  openModal('Veriyi Sıfırla', 'Tüm günlük veriler silinecek. Görev tanımları korunur. Devam et?', () => {
-    localStorage.removeItem('gunluk_v3');
-    localStorage.removeItem('gunluk_study');
+// ======================================================
+// REPORT
+// ======================================================
+function confirmSendReport(){
+  openModal('Raporu Gönder','Günlük takip raporu e-posta ile gönderilsin mi?', async () => {
     closeModal();
-    renderDaily();
-    showToast('Veri sıfırlandı');
+    const key = dateKey(currentDate);
+    const dayData = getDayData(key);
+    const { everyday, daily, study } = getAllTasksForDay(key);
+    const allTasks = [...everyday, ...daily, ...study];
+    const done  = allTasks.filter(t => dayData.tasks[t.id]).length;
+    const total = allTasks.length;
+    const taskList = allTasks.map(t => (dayData.tasks[t.id]?'✅':'❌')+' '+t.name).join('\n');
+    const msg = `📅 ${key}\n\n✅ ${done}/${total} görev tamamlandı\n\n${taskList}\n\n📝 Not:\n${dayData.note||'(yok)'}`;
+    try {
+      await emailjs.send('service_qv6p0ra','template_k524mw5',{ message:msg, date:key, summary:`${done}/${total} görev` });
+      showToast('📧 Rapor gönderildi!');
+    } catch(e){ showToast('Hata: '+(e.text||'Gönderilemedi')); }
   });
 }
 
-// ======== TOAST ========
-function showToast(msg) {
+// ======================================================
+// MODAL
+// ======================================================
+function openModal(title, text, cb){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent  = text;
+  document.getElementById('modalConfirmBtn').onclick = cb;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+function confirmClear(){
+  openModal('Veriyi Sıfırla','Tüm günlük veriler silinecek. Görev tanımları korunur. Devam et?', () => {
+    localStorage.removeItem('gunluk_v3');
+    localStorage.removeItem('gunluk_study2');
+    closeModal(); renderDaily(); showToast('Veri sıfırlandı');
+  });
+}
+
+// ======================================================
+// TOAST
+// ======================================================
+function showToast(msg){
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ======== INIT ========
-function initTaskDefs() {
+// ======================================================
+// INIT
+// ======================================================
+function initTaskDefs(){
   const s = getSettings();
-  if (!s.taskDefs) {
-    s.taskDefs = DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order: i}));
+  if (!s.taskDefs){
+    s.taskDefs = DEFAULT_EVERYDAY_TASKS.map((t,i) => ({...t, order:i}));
     saveSettingsData(s);
   }
 }
-
 initTaskDefs();
 renderDaily();
 </script>
