@@ -1,19 +1,16 @@
-Tamam. Aşağıda sana tek parça, baştan yazılmış, düzeltilmiş `index.html` veriyorum.
+Aşağıda tek parça tam `index.html` veriyorum.  
+İstediğin değişiklikler dahil:
+- `Passport` yerine `Delft` yazıldı
+- `Yeni görev` alanı var [1]
+- görev eklerken `Sadece bugün` / `Her gün` seçeneği var
+- her gün sabit görevler var
+- cuma/cumartesi/pazar `Instagram tekrar` var
+- A1, A2, B1 Deel 1, B1 Deel 2, B2 var; kaynaklar da uygulamada yer alıyor [1]
+- dinleme planı 3 günlük döngü mantığında kaldı: `1–20`, `21–33`, `34–42` [1]
+- `Özet` alanı var: toplam, tamamlanan, kalan [1]
+- tik atılan görev aynı gün kaybolmaz, sadece üzeri çizilir
 
-Bu sürümde:
-- günlük manuel görev ekleme var (`Yeni görev` mantığı korunuyor) [1]
-- `Özet` alanı var: toplam / tamamlanan / kalan [1]
-- `Ayarlar` bölümü var [1]
-- A1, A2, B1 Deel 1, B1 Deel 2 ve B2 görev planı var
-- tik atılan görevler kaybolmaz, o günün programında kalır
-- sadece üzeri çizilir
-- B2 aynı gün içinde bir sonraki parçaya atlamaz
-- ertesi gün sıradaki parçadan devam eder
-- haftalık görünüm var
-- dinleme planı var
-- küçük güvenli rapor gönderme alanı var
-
-Sadece şu satırı kendi mailinle değiştir:
+Sadece şu satırı kendine göre değiştir:
 ```js
 const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 ```
@@ -29,6 +26,7 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Günlük Takip" />
   <title>Günlük Takip</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
@@ -47,7 +45,6 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
     }
 
     *{box-sizing:border-box}
-
     body{
       margin:0;
       font-family:Arial,sans-serif;
@@ -71,7 +68,6 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
     }
 
     h1,h2,h3,h4,p{margin:0}
-
     .muted{color:var(--muted)}
 
     .tabs{
@@ -253,6 +249,12 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       border-color:#c7d2fe;
     }
 
+    .badge.recurring{
+      background:#ecfeff;
+      color:#155e75;
+      border-color:#a5f3fc;
+    }
+
     .task-actions{
       display:flex;
       gap:8px;
@@ -312,7 +314,7 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     .inline-form{
       display:grid;
-      grid-template-columns:1fr auto;
+      grid-template-columns:1fr 180px auto;
       gap:8px;
       margin-bottom:14px;
     }
@@ -438,6 +440,10 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
           <div class="inline-form">
             <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle: spor, yürüyüş, market, film..." />
+            <select id="manualTaskType" class="input">
+              <option value="once">Sadece bugün</option>
+              <option value="daily">Her gün</option>
+            </select>
             <button class="btn primary" id="addManualTaskBtn">Görev Ekle</button>
           </div>
 
@@ -501,32 +507,38 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
           <div class="task-list">
             <div class="task-item">
               <div class="task-title">A1</div>
+              <div class="task-desc">Haftada 1 kez kontrol</div>
               <div class="task-actions">
                 <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a>
               </div>
             </div>
+
             <div class="task-item">
               <div class="task-title">A2</div>
+              <div class="task-desc">Haftada 1 kez kontrol</div>
               <div class="task-actions">
                 <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a>
               </div>
             </div>
+
             <div class="task-item">
               <div class="task-title">B1 Deel 1</div>
               <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a>
+                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">B1 Deel 1 Aç</a>
               </div>
             </div>
+
             <div class="task-item">
               <div class="task-title">B1 Deel 2</div>
               <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a>
+                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">B1 Deel 2 Aç</a>
               </div>
             </div>
+
             <div class="task-item">
               <div class="task-title">B2</div>
               <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">Aç</a>
+                <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">B2 Aç</a>
               </div>
             </div>
           </div>
@@ -545,7 +557,7 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
         </div>
 
         <div class="card">
-          <h2>Plan</h2>
+          <h2>Döngü planı</h2>
           <div class="task-list">
             <div class="task-item">
               <div class="task-title">Gün 1</div>
@@ -626,11 +638,12 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_final_v3",
-      completions: "gunluk_takip_completions_final_v3",
-      notes: "gunluk_takip_notes_final_v3",
-      ui: "gunluk_takip_ui_final_v3",
-      manualTasks: "gunluk_takip_manual_tasks_final_v3"
+      settings: "gunluk_takip_settings_final_v6",
+      completions: "gunluk_takip_completions_final_v6",
+      notes: "gunluk_takip_notes_final_v6",
+      ui: "gunluk_takip_ui_final_v6",
+      manualTasks: "gunluk_takip_manual_tasks_final_v6",
+      recurringTasks: "gunluk_takip_recurring_tasks_final_v6"
     };
 
     const DEFAULT_SETTINGS = {
@@ -651,21 +664,21 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
     const LISTENING_CYCLE = [
       {
         id:"listen-1",
-        title:"Passport dinleme: 1–20",
+        title:"Delft dinleme: 1–20",
         description:"Bugün 1–20 arası dinle",
         link:"https://youtu.be/a8_vN9sj6Cs",
         label:"1–20"
       },
       {
         id:"listen-2",
-        title:"Passport dinleme: 21–33",
+        title:"Delft dinleme: 21–33",
         description:"Bugün 21–33 arası dinle",
         link:"https://youtu.be/a8_vN9sj6Cs?t=2804",
         label:"21–33"
       },
       {
         id:"listen-3",
-        title:"Passport dinleme: 34–42",
+        title:"Delft dinleme: 34–42",
         description:"Bugün 34–42 arası dinle",
         link:"https://youtu.be/a8_vN9sj6Cs?t=4808",
         label:"34–42"
@@ -692,7 +705,8 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       completions: loadJSON(STORAGE_KEYS.completions, {}),
       notes: loadJSON(STORAGE_KEYS.notes, {}),
       ui: loadJSON(STORAGE_KEYS.ui, { activeView: "gunluk" }),
-      manualTasks: loadJSON(STORAGE_KEYS.manualTasks, {})
+      manualTasks: loadJSON(STORAGE_KEYS.manualTasks, {}),
+      recurringTasks: loadJSON(STORAGE_KEYS.recurringTasks, [])
     };
 
     function todayISO() {
@@ -765,17 +779,34 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       return state.manualTasks[dateISO] || [];
     }
 
-    function addManualTask(dateISO, title) {
-      if (!state.manualTasks[dateISO]) state.manualTasks[dateISO] = [];
-      const id = "manual-" + Date.now();
-      state.manualTasks[dateISO].push({
-        id,
-        title: title.trim(),
-        type: "manual",
-        description: "Kendi eklediğin görev",
-        badges: ["Kişisel görev"]
-      });
-      saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+    function getRecurringTasks() {
+      return state.recurringTasks || [];
+    }
+
+    function addTask(title, type, dateISO) {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+
+      if (type === "daily") {
+        state.recurringTasks.push({
+          id: "recurring-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
+          title: trimmed,
+          type: "manual-recurring",
+          description: "Her gün görünen görev",
+          badges: ["Her gün"]
+        });
+        saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
+      } else {
+        if (!state.manualTasks[dateISO]) state.manualTasks[dateISO] = [];
+        state.manualTasks[dateISO].push({
+          id: "manual-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
+          title: trimmed,
+          type: "manual",
+          description: "Seçilen güne özel görev",
+          badges: ["Tek gün"]
+        });
+        saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+      }
     }
 
     function deleteManualTask(dateISO, taskId) {
@@ -786,6 +817,17 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
         saveJSON(STORAGE_KEYS.completions, state.completions);
       }
       saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+    }
+
+    function deleteRecurringTask(taskId) {
+      state.recurringTasks = state.recurringTasks.filter(t => t.id !== taskId);
+      for (const date in state.completions) {
+        if (state.completions[date] && state.completions[date][taskId]) {
+          delete state.completions[date][taskId];
+        }
+      }
+      saveJSON(STORAGE_KEYS.completions, state.completions);
+      saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
     }
 
     function getListeningTaskForDate(dateISO) {
@@ -878,8 +920,58 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       };
     }
 
+    function getRoutineTasksForDate(dateISO) {
+      const tasks = [];
+      const day = parseLocalDate(dateISO).getDay();
+
+      tasks.push(
+        {
+          id: "routine-walk",
+          type: "daily",
+          title: "Fullbody yada yürüyüşe çık",
+          description: "Her gün sabit görev",
+          badges: ["Rutin"]
+        },
+        {
+          id: "routine-film",
+          type: "daily",
+          title: "Film izle",
+          description: "Her gün sabit görev",
+          badges: ["Rutin"]
+        },
+        {
+          id: "routine-twitter",
+          type: "daily",
+          title: "Twitter süresini kısalt",
+          description: "Her gün sabit görev",
+          badges: ["Rutin"]
+        },
+        {
+          id: "routine-phone",
+          type: "daily",
+          title: "Telefonu 22.30'da bırak",
+          description: "Her gün sabit görev",
+          badges: ["Rutin"]
+        }
+      );
+
+      if (day === 5 || day === 6 || day === 0) {
+        tasks.push({
+          id: "routine-instagram-repeat",
+          type: "daily",
+          title: "Instagram tekrar",
+          description: "Sadece cuma, cumartesi ve pazar",
+          badges: ["Hafta sonu rutini"]
+        });
+      }
+
+      return tasks;
+    }
+
     function getAutoTasksForDate(dateISO) {
       const tasks = [];
+
+      tasks.push(...getRoutineTasksForDate(dateISO));
 
       const a1 = getWeeklyCarryTask("weekly-a1", "A1 haftalık tekrar", LINKS.a1, dateISO, 1);
       if (a1) tasks.push(a1);
@@ -902,12 +994,17 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
     }
 
     function getTasksForDate(dateISO) {
-      return [...getManualTasks(dateISO), ...getAutoTasksForDate(dateISO)];
+      return [
+        ...getManualTasks(dateISO),
+        ...getRecurringTasks(),
+        ...getAutoTasksForDate(dateISO)
+      ];
     }
 
     function renderBadges(task) {
       let html = "";
       if (task.type === "manual") html += `<span class="badge manual">Kişisel</span>`;
+      if (task.type === "manual-recurring") html += `<span class="badge recurring">Her gün</span>`;
       if (task.type === "weekly") html += `<span class="badge">Haftalık</span>`;
       if (task.type === "daily") html += `<span class="badge">Günlük</span>`;
       if (task.type === "listen") html += `<span class="badge">Dinleme</span>`;
@@ -916,7 +1013,7 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       return html;
     }
 
-    function renderTaskList(containerId, tasks, dateISO, showDeleteForManual = false) {
+    function renderTaskList(containerId, tasks, dateISO, allowDelete = false) {
       const el = document.getElementById(containerId);
 
       if (!tasks.length) {
@@ -926,6 +1023,15 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
       el.innerHTML = tasks.map(task => {
         const done = isTaskDone(task.id, dateISO);
+
+        let deleteButton = "";
+        if (allowDelete && task.type === "manual") {
+          deleteButton = `<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>`;
+        }
+        if (allowDelete && task.type === "manual-recurring") {
+          deleteButton = `<button class="btn small danger-btn delete-recurring-btn" data-task-id="${esc(task.id)}">Sil</button>`;
+        }
+
         return `
           <div class="task-item ${done ? "done" : ""}">
             <div class="task-row">
@@ -937,7 +1043,7 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
                   <div class="badge-row">${renderBadges(task)}</div>
                   <div class="task-actions">
                     ${task.link ? `<a class="link-btn" target="_blank" href="${esc(task.link)}">Kaynağı Aç</a>` : ""}
-                    ${showDeleteForManual && task.type === "manual" ? `<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>` : ""}
+                    ${deleteButton}
                   </div>
                 </div>
               </div>
@@ -959,6 +1065,13 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
           renderAll();
         });
       });
+
+      el.querySelectorAll(".delete-recurring-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          deleteRecurringTask(e.target.dataset.taskId);
+          renderAll();
+        });
+      });
     }
 
     function renderDaily() {
@@ -974,7 +1087,6 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
       document.getElementById("statTotal").textContent = total;
       document.getElementById("statDone").textContent = done;
       document.getElementById("statLeft").textContent = total - done;
-
       document.getElementById("dailyNote").value = state.notes[dateISO] || "";
     }
 
@@ -1129,10 +1241,13 @@ const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     document.getElementById("addManualTaskBtn").addEventListener("click", () => {
       const input = document.getElementById("manualTaskInput");
+      const type = document.getElementById("manualTaskType").value;
       const value = input.value.trim();
       if (!value) return;
-      addManualTask(state.selectedDate, value);
+
+      addTask(value, type, state.selectedDate);
       input.value = "";
+      document.getElementById("manualTaskType").value = "once";
       renderAll();
     });
 
