@@ -515,11 +515,11 @@
         <div class="card">
           <h2>Kaynaklar</h2>
           <div class="task-list">
-            <div class="task-item"><div class="task-title">A1</div></div>
-            <div class="task-item"><div class="task-title">A2</div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 1</div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 2</div></div>
-            <div class="task-item"><div class="task-title">B2</div></div>
+            <div class="task-item"><div class="task-title">A1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a></div></div>
+            <div class="task-item"><div class="task-title">A2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">Aç</a></div></div>
           </div>
         </div>
       </div>
@@ -536,11 +536,14 @@
         </div>
 
         <div class="card">
-          <h2>Delft planı</h2>
+          <h2>Döngü planı</h2>
           <div class="task-list">
-            <div class="task-item"><div class="task-title">Seri 1 — 1–20</div></div>
-            <div class="task-item"><div class="task-title">Seri 2 — 21–33</div></div>
-            <div class="task-item"><div class="task-title">Seri 3 — 34–42</div></div>
+            <div class="task-item"><div class="task-title">Delft 1–20</div></div>
+            <div class="task-item"><div class="task-title">Delft 21–33</div></div>
+            <div class="task-item"><div class="task-title">Delft 34–42</div></div>
+            <div class="task-item"><div class="task-title">Delftse B1 / 1-14</div></div>
+            <div class="task-item"><div class="task-title">Delftse B1 / 15-28</div></div>
+            <div class="task-item"><div class="task-title">Delftse B1 / 29-42</div></div>
           </div>
         </div>
       </div>
@@ -593,12 +596,12 @@
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_sort_final",
-      completions: "gunluk_takip_completions_sort_final",
-      notes: "gunluk_takip_notes_sort_final",
-      ui: "gunluk_takip_ui_sort_final",
-      manualTasks: "gunluk_takip_manual_tasks_sort_final",
-      recurringTasks: "gunluk_takip_recurring_tasks_sort_final"
+      settings: "gunluk_takip_settings_delft6",
+      completions: "gunluk_takip_completions_delft6",
+      notes: "gunluk_takip_notes_delft6",
+      ui: "gunluk_takip_ui_delft6",
+      manualTasks: "gunluk_takip_manual_tasks_delft6",
+      recurringTasks: "gunluk_takip_recurring_tasks_delft6"
     };
 
     const DEFAULT_SETTINGS = { userName: "", b2Frequency: 1 };
@@ -610,13 +613,16 @@
       b1d1: "https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
       b1d2: "https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
       b2: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
-      instagramDaily: "https://www.instagram.com/reel/DYjMBLntz2r/?utm_source=ig_web_button_share_sheet&igsh=MzRlODBiNWFlZA=="
+      instagramDaily: "https://www.instagram.com/your_activity/interactions/likes"
     };
 
     const DELFT_SERIES = [
       { id:"delft-1", title:"Delft 1–20", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs", label:"1–20" },
       { id:"delft-2", title:"Delft 21–33", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs?t=2804", label:"21–33" },
-      { id:"delft-3", title:"Delft 34–42", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs?t=4808", label:"34–42" }
+      { id:"delft-3", title:"Delft 34–42", description:"Haftalık", link:"https://youtu.be/a8_vN9sj6Cs?t=4808", label:"34–42" },
+      { id:"delft-4", title:"Delftse B1 / 1-14", description:"Haftalık", link:"https://youtu.be/tlyK-1vbTYY?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"1-14" },
+      { id:"delft-5", title:"Delftse B1 / 15-28", description:"Haftalık", link:"https://youtu.be/KQDtSWHfi3o?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"15-28" },
+      { id:"delft-6", title:"Delftse B1 / 29-42", description:"Haftalık", link:"https://youtu.be/acKpcHns71I?list=PL4Yv72Ufjh01g7E5uhm6KzrMA1dr2NyER", label:"29-42" }
     ];
 
     const B2_PARTS = [
@@ -645,13 +651,8 @@
     function isTaskDone(taskId,dateISO){ return !!state.completions[dateISO]?.[taskId]; }
     function setTaskDone(taskId,dateISO,done){ if(!state.completions[dateISO]) state.completions[dateISO]={}; state.completions[dateISO][taskId]=done; saveJSON(STORAGE_KEYS.completions,state.completions); }
 
-    function getManualTasks(dateISO){
-      return (state.manualTasks[dateISO]||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
-    }
-
-    function getRecurringTasks(){
-      return (state.recurringTasks||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
-    }
+    function getManualTasks(dateISO){ return (state.manualTasks[dateISO]||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)); }
+    function getRecurringTasks(){ return (state.recurringTasks||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)); }
 
     function addTask(title,type,dateISO,linkValue){
       const trimmed=title.trim();
@@ -737,7 +738,11 @@
 
     function getDelftTaskForDate(dateISO){
       const weekStart=getWeekStart(dateISO);
-      const doneTodayId=Object.keys(state.completions[dateISO]||{}).find(taskId=>taskId.startsWith("delft-")&&state.completions[dateISO][taskId]);
+
+      const doneTodayId=Object.keys(state.completions[dateISO]||{}).find(taskId =>
+        taskId.startsWith("delft-") && state.completions[dateISO][taskId]
+      );
+
       if(doneTodayId){
         const current=DELFT_SERIES.find(x=>x.id===doneTodayId);
         return {...current,type:"listen",badges:["Delft",current.label]};
@@ -755,11 +760,11 @@
       let totalDone=0;
       for(const date in state.completions){
         for(const taskId in state.completions[date]){
-          if(state.completions[date][taskId]&&taskId.startsWith("delft-")) totalDone++;
+          if(state.completions[date][taskId] && taskId.startsWith("delft-")) totalDone++;
         }
       }
 
-      const idx=totalDone%DELFT_SERIES.length;
+      const idx=totalDone % DELFT_SERIES.length;
       const selected=DELFT_SERIES[idx];
       return {...selected,type:"listen",badges:["Delft",selected.label]};
     }
@@ -1081,12 +1086,14 @@
       try{
         status.textContent="Gönderiliyor...";
         status.className="tiny-note warn";
+
         await emailjs.send("service_qv6p0ra","template_k524mw5",{
           to_email: FIXED_REPORT_EMAIL,
           user_name: state.settings.userName || "Kullanıcı",
           report_date: state.selectedDate,
           message: "Günlük rapor"
         });
+
         status.textContent="Rapor gönderildi";
         status.className="tiny-note ok";
         document.getElementById("confirmText").value="";
@@ -1182,3 +1189,4 @@
   </script>
 </body>
 </html>
+```
