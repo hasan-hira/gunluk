@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Günlük Takip">
+<meta name="theme-color" content="#ffffff">
+<title>Günlük Takip</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid #e8e8e4;
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-row { display: flex; align-items: center; justify-content: space-between; }
+  .app-title { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+  .date-str { font-size: 13px; color: #888; margin-top: 2px; }
+  .streak-badge {
+    font-size: 12px;
+    background: #fff3e0;
+    color: #e65100;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .progress-wrap { padding: 14px 0 0; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .progress-track { background: #e8e8e4; border-radius: 99px; height: 5px; overflow: hidden; }
+  .progress-fill { height: 5px; border-radius: 99px; background: #1D9E75; transition: width 0.4s ease; }
+  .content { padding: 0 16px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 20px 0 8px 4px;
+  }
+  .task-card {
+    background: #fff;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    padding: 14px 14px 14px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #eeeeea;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .task-card.done { opacity: 0.45; }
+  .task-card.done .task-name { text-decoration: line-through; }
+  .check-circle {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .task-card.done .check-circle { background: #1D9E75; border-color: #1D9E75; }
+  .check-circle svg { display: none; }
+  .task-card.done .check-circle svg { display: block; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-name { font-size: 15px; color: #1a1a1a; line-height: 1.4; }
+  .task-note { font-size: 12px; color: #999; margin-top: 3px; }
+  .task-link { font-size: 12px; color: #185FA5; margin-top: 3px; display: block; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 8px; }
+  .dot-spor { background: #1D9E75; }
+  .dot-dil { background: #185FA5; }
+  .dot-is { background: #E65100; }
+  .dot-yasam { background: #993556; }
+  .task-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: #bbb; font-size: 18px; padding: 2px;
+    display: flex; align-items: center;
+  }
+  .icon-btn:active { color: #555; }
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff;
+    border-top: 1px solid #e8e8e4;
+    padding: 12px 16px;
+    display: flex; gap: 10px;
+    z-index: 20;
+  }
+  .btn-report {
+    flex: 1; padding: 14px;
+    background: #1a1a1a; color: #fff;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-report:active { opacity: 0.85; transform: scale(0.98); }
+  .btn-report.sending { background: #888; }
+  .fab {
+    width: 52px; height: 52px;
+    background: #1D9E75;
+    color: #fff; border: none;
+    border-radius: 50%;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fab:active { transform: scale(0.95); }
+  .reset-btn {
+    font-size: 12px; color: #aaa;
+    background: none; border: 1px solid #e0e0db;
+    border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 40px;
+    width: 100%; max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 99px; margin: 0 auto 20px; }
+  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+  .field-label { font-size: 12px; color: #888; margin-bottom: 4px; margin-top: 14px; display: block; }
+  .field-input {
+    width: 100%; font-size: 15px;
+    border: 1px solid #e0e0db; border-radius: 10px;
+    padding: 10px 12px; background: #fafaf8;
+    outline: none; color: #1a1a1a;
+    -webkit-appearance: none;
+  }
+  .field-input:focus { border-color: #1a1a1a; background: #fff; }
+  select.field-input { height: 44px; }
+  textarea.field-input { height: 70px; resize: none; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-cancel {
+    flex: 1; padding: 13px; border-radius: 12px;
+    border: 1px solid #e0e0db; background: #fff;
+    font-size: 15px; cursor: pointer; color: #555;
+  }
+  .btn-save {
+    flex: 2; padding: 13px; border-radius: 12px;
+    border: none; background: #1a1a1a;
+    font-size: 15px; cursor: pointer; color: #fff; font-weight: 500;
+  }
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; color: #fff;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 14px; z-index: 200;
+    opacity: 0; transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <div>
+      <div class="app-title">Günlük Takip</div>
+      <div class="date-str" id="dateStr"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="streak-badge" id="streakBadge" style="display:none"></span>
+      <button class="reset-btn" onclick="resetDay()">Sıfırla</button>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="progressLabel">0 / 0 tamamlandı</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="content" id="taskList"></div>
+
+<div class="bottom-bar">
+  <button class="btn-report" id="reportBtn" onclick="sendReport()">📧 Günlük raporu gönder</button>
+  <button class="fab" onclick="openModal()" aria-label="Görev ekle">+</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modalTitle">Yeni görev</h3>
+    <label class="field-label">Görev adı</label>
+    <input class="field-input" type="text" id="mName" placeholder="Örn: 30 dk spor yap">
+    <label class="field-label">Kategori</label>
+    <select class="field-input" id="mCat">
+      <option value="spor">💚 Spor</option>
+      <option value="dil">🔵 Hollandaca</option>
+      <option value="is">🟠 İş / Teknik</option>
+      <option value="yasam">🩷 Yaşam</option>
+    </select>
+    <label class="field-label">Not (isteğe bağlı)</label>
+    <textarea class="field-input" id="mNote" placeholder="Hatırlatma, açıklama..."></textarea>
+    <label class="field-label">Link (isteğe bağlı)</label>
+    <input class="field-input" type="url" id="mLink" placeholder="https://...">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">İptal</button>
+      <button class="btn-save" onclick="saveTask()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+emailjs.init('fD5cr29ZVYp51xJ2T');
+
+const SERVICE_ID  = 'service_qv6p0ra';
+const TEMPLATE_ID = 'template_k524mw5';
+
+const CATS = {
+  spor:  { label: 'Spor' },
+  dil:   { label: 'Hollandaca' },
+  is:    { label: 'İş / Teknik' },
+  yasam: { label: 'Yaşam' }
+};
+
+const DEFAULTS = [
+  { id:1, name:'Fullbody antrenman (33-45 dk)', cat:'spor',  note:'Dumbell + vücut ağırlığı', link:'' },
+  { id:2, name:'Saat 23:30\'da telefonu bırak', cat:'yasam', note:'Twitter / sosyal medyayı kapat', link:'' },
+  { id:3, name:'Hollandaca film / dizi izle',   cat:'dil',   note:'Hollandaca altyazıyla', link:'' },
+  { id:4, name:'Instagram NL sayfası çalış',    cat:'dil',   note:'Bilmediğin paylaşımı kaydet', link:'' },
+  { id:5, name:'Teknik döküman oku (Enexis)',   cat:'is',    note:'MS/LS, GEN, GAIA konuları', link:'' },
+  { id:6, name:'Twitter süresini kısıt',        cat:'yasam', note:'Max 20 dk, NL hesapları takip et', link:'' },
+];
+
+function todayKey() { return 'day_' + new Date().toISOString().slice(0,10); }
+
+let data;
+function load() {
+  try { const r = localStorage.getItem('gorev_v2'); data = r ? JSON.parse(r) : null; }
+  catch(e) { data = null; }
+  if (!data) {
+    data = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), done: [], day: todayKey(), streak: 0 };
+    save(); return;
+  }
+  if (data.day !== todayKey()) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yKey = 'day_' + yesterday.toISOString().slice(0,10);
+    data.streak = (data.day === yKey && data.done.length > 0) ? (data.streak||0)+1 : 0;
+    data.done = [];
+    data.day = todayKey();
+    save();
+  }
+}
+function save() { localStorage.setItem('gorev_v2', JSON.stringify(data)); }
+
+function showToast(msg, duration) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration || 2500);
+}
+
+function sendReport() {
+  const btn = document.getElementById('reportBtn');
+  btn.classList.add('sending');
+  btn.textContent = '⏳ Gönderiliyor...';
+
+  const total = data.tasks.length;
+  const doneIds = data.done;
+  const doneTasks = data.tasks.filter(t => doneIds.includes(t.id));
+  const notDoneTasks = data.tasks.filter(t => !doneIds.includes(t.id));
+
+  const now = new Date();
+  const tarih = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const tamamlanan = doneTasks.length > 0
+    ? doneTasks.map(t => '• ' + t.name).join('\n')
+    : '— Yok';
+  const tamamlanmayan = notDoneTasks.length > 0
+    ? notDoneTasks.map(t => '• ' + t.name).join('\n')
+    : '— Hepsi tamamlandı 🎉';
+
+  emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+    tarih: tarih,
+    tamamlanan_sayi: doneTasks.length,
+    toplam: total,
+    tamamlanan: tamamlanan,
+    tamamlanmayan: tamamlanmayan
+  }).then(() => {
+    btn.classList.remove('sending');
+    btn.textContent = '📧 Günlük raporu gönder';
+    showToast('✅ Rapor gönderildi!');
+  }).catch((err) => {
+    btn.classList.remove('sending');
+    btn.textContent = '📧 Günlük raporu gönder';
+    showToast('❌ Hata: ' + (err.text || 'Gönderilemedi'));
+  });
+}
+
+function render() {
+  const now = new Date();
+  document.getElementById('dateStr').textContent = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const sb = document.getElementById('streakBadge');
+  if (data.streak > 0) { sb.style.display=''; sb.textContent=data.streak+' gün 🔥'; }
+  else { sb.style.display='none'; }
+
+  const total = data.tasks.length;
+  const done = data.done.length;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('progressLabel').textContent = done+' / '+total+' tamamlandı';
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('progressFill').style.width = pct+'%';
+
+  const groups = {};
+  Object.keys(CATS).forEach(k => groups[k]=[]);
+  data.tasks.forEach(t => { if(groups[t.cat]) groups[t.cat].push(t); });
+
+  let html = '';
+  let hasAny = false;
+  Object.entries(groups).forEach(([cat, tasks]) => {
+    if (!tasks.length) return;
+    hasAny = true;
+    html += '<div class="section-label">'+CATS[cat].label+'</div>';
+    tasks.forEach(t => {
+      const isDone = data.done.includes(t.id);
+      html += `<div class="task-card${isDone?' done':''}" onclick="toggle(${t.id})">
+        <div class="cat-dot dot-${t.cat}"></div>
+        <div class="check-circle">
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+            <path d="M1 5l3.5 3.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="task-body">
+          <div class="task-name">${esc(t.name)}</div>
+          ${t.note?`<div class="task-note">${esc(t.note)}</div>`:''}
+          ${t.link?`<a class="task-link" href="${esc(t.link)}" onclick="event.stopPropagation()" target="_blank">🔗 Linke git</a>`:''}
+        </div>
+        <div class="task-actions" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="editTask(${t.id})">✏️</button>
+          <button class="icon-btn" onclick="deleteTask(${t.id})">🗑</button>
+        </div>
+      </div>`;
+    });
+  });
+  if (!hasAny) html = '<div class="empty-state">Henüz görev yok.<br>+ butonuna bas ve ekle.</div>';
+  document.getElementById('taskList').innerHTML = html;
+}
+
+function toggle(id) {
+  const idx = data.done.indexOf(id);
+  if (idx>=0) data.done.splice(idx,1); else data.done.push(id);
+  save(); render();
+}
+function resetDay() {
+  if (confirm('Bugünkü tüm işaretler sıfırlansın mı?')) { data.done=[]; save(); render(); }
+}
+function deleteTask(id) {
+  if (confirm('Bu görevi sil?')) {
+    data.tasks = data.tasks.filter(t=>t.id!==id);
+    data.done = data.done.filter(d=>d!==id);
+    save(); render();
+  }
+}
+
+let editId = null;
+function openModal(id) {
+  editId = id||null;
+  if (id) {
+    const t = data.tasks.find(x=>x.id===id);
+    document.getElementById('modalTitle').textContent='Görevi düzenle';
+    document.getElementById('mName').value=t.name;
+    document.getElementById('mCat').value=t.cat;
+    document.getElementById('mNote').value=t.note||'';
+    document.getElementById('mLink').value=t.link||'';
+  } else {
+    document.getElementById('modalTitle').textContent='Yeni görev';
+    document.getElementById('mName').value='';
+    document.getElementById('mCat').value='yasam';
+    document.getElementById('mNote').value='';
+    document.getElementById('mLink').value='';
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mName').focus(),100);
+}
+function editTask(id) { openModal(id); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function saveTask() {
+  const name = document.getElementById('mName').value.trim();
+  if (!name) { document.getElementById('mName').focus(); return; }
+  const cat = document.getElementById('mCat').value;
+  const note = document.getElementById('mNote').value.trim();
+  const link = document.getElementById('mLink').value.trim();
+  if (editId) {
+    const t = data.tasks.find(x=>x.id===editId);
+    if (t) { t.name=name; t.cat=cat; t.note=note; t.link=link; }
+  } else {
+    const maxId = data.tasks.reduce((m,t)=>Math.max(m,t.id),0);
+    data.tasks.push({id:maxId+1,name,cat,note,link});
+  }
+  save(); render(); closeModal();
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+load(); render();
+</script>
+</body>
+</html>
