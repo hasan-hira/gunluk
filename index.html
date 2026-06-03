@@ -1,434 +1,971 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Günlük Takip">
-<meta name="theme-color" content="#ffffff">
-<title>Günlük Takip</title>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f0;
-    color: #1a1a1a;
-    min-height: 100vh;
-    padding-bottom: 100px;
-  }
-  .topbar {
-    background: #fff;
-    border-bottom: 1px solid #e8e8e4;
-    padding: 16px 20px 12px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  .topbar-row { display: flex; align-items: center; justify-content: space-between; }
-  .app-title { font-size: 20px; font-weight: 600; color: #1a1a1a; }
-  .date-str { font-size: 13px; color: #888; margin-top: 2px; }
-  .streak-badge {
-    font-size: 12px;
-    background: #fff3e0;
-    color: #e65100;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-weight: 500;
-  }
-  .progress-wrap { padding: 14px 0 0; }
-  .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
-  .progress-track { background: #e8e8e4; border-radius: 99px; height: 5px; overflow: hidden; }
-  .progress-fill { height: 5px; border-radius: 99px; background: #1D9E75; transition: width 0.4s ease; }
-  .content { padding: 0 16px; }
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #aaa;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin: 20px 0 8px 4px;
-  }
-  .task-card {
-    background: #fff;
-    border-radius: 14px;
-    margin-bottom: 8px;
-    padding: 14px 14px 14px 12px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    border: 1px solid #eeeeea;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .task-card.done { opacity: 0.45; }
-  .task-card.done .task-name { text-decoration: line-through; }
-  .check-circle {
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    border: 2px solid #ddd;
-    flex-shrink: 0;
-    margin-top: 1px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-  }
-  .task-card.done .check-circle { background: #1D9E75; border-color: #1D9E75; }
-  .check-circle svg { display: none; }
-  .task-card.done .check-circle svg { display: block; }
-  .task-body { flex: 1; min-width: 0; }
-  .task-name { font-size: 15px; color: #1a1a1a; line-height: 1.4; }
-  .task-note { font-size: 12px; color: #999; margin-top: 3px; }
-  .task-link { font-size: 12px; color: #185FA5; margin-top: 3px; display: block; }
-  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 8px; }
-  .dot-spor { background: #1D9E75; }
-  .dot-dil { background: #185FA5; }
-  .dot-is { background: #E65100; }
-  .dot-yasam { background: #993556; }
-  .task-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-  .icon-btn {
-    background: none; border: none; cursor: pointer;
-    color: #bbb; font-size: 18px; padding: 2px;
-    display: flex; align-items: center;
-  }
-  .icon-btn:active { color: #555; }
-  .bottom-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff;
-    border-top: 1px solid #e8e8e4;
-    padding: 12px 16px;
-    display: flex; gap: 10px;
-    z-index: 20;
-  }
-  .btn-report {
-    flex: 1; padding: 14px;
-    background: #1a1a1a; color: #fff;
-    border: none; border-radius: 14px;
-    font-size: 15px; font-weight: 500;
-    cursor: pointer;
-  }
-  .btn-report:active { opacity: 0.85; transform: scale(0.98); }
-  .btn-report.sending { background: #888; }
-  .fab {
-    width: 52px; height: 52px;
-    background: #1D9E75;
-    color: #fff; border: none;
-    border-radius: 50%;
-    font-size: 26px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .fab:active { transform: scale(0.95); }
-  .reset-btn {
-    font-size: 12px; color: #aaa;
-    background: none; border: 1px solid #e0e0db;
-    border-radius: 8px; padding: 5px 12px; cursor: pointer;
-  }
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 100; align-items: flex-end; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: #fff;
-    border-radius: 20px 20px 0 0;
-    padding: 20px 20px 40px;
-    width: 100%; max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  .modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 99px; margin: 0 auto 20px; }
-  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
-  .field-label { font-size: 12px; color: #888; margin-bottom: 4px; margin-top: 14px; display: block; }
-  .field-input {
-    width: 100%; font-size: 15px;
-    border: 1px solid #e0e0db; border-radius: 10px;
-    padding: 10px 12px; background: #fafaf8;
-    outline: none; color: #1a1a1a;
-    -webkit-appearance: none;
-  }
-  .field-input:focus { border-color: #1a1a1a; background: #fff; }
-  select.field-input { height: 44px; }
-  textarea.field-input { height: 70px; resize: none; }
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-  .btn-cancel {
-    flex: 1; padding: 13px; border-radius: 12px;
-    border: 1px solid #e0e0db; background: #fff;
-    font-size: 15px; cursor: pointer; color: #555;
-  }
-  .btn-save {
-    flex: 2; padding: 13px; border-radius: 12px;
-    border: none; background: #1a1a1a;
-    font-size: 15px; cursor: pointer; color: #fff; font-weight: 500;
-  }
-  .toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-    background: #1a1a1a; color: #fff;
-    padding: 10px 20px; border-radius: 99px;
-    font-size: 14px; z-index: 200;
-    opacity: 0; transition: opacity 0.3s;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; }
-  .empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Günlük Takip</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --primary:#2563eb;
+      --success:#16a34a;
+      --warn:#ea580c;
+      --danger:#dc2626;
+      --shadow:0 8px 24px rgba(0,0,0,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px 16px 96px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    h1,h2,h3,p{margin:0}
+    .muted{color:var(--muted)}
+    .btn,.tab,.link-btn,input,select,textarea{
+      font:inherit;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background:var(--primary);
+      color:#fff;
+      border-color:var(--primary);
+    }
+    .btn.small{
+      padding:8px 10px;
+      font-size:13px;
+    }
+    .date-controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .date-input,.input,.textarea{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fff;
+      width:100%;
+    }
+    .tabs{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      margin-bottom:16px;
+      padding-bottom:4px;
+    }
+    .tab{
+      white-space:nowrap;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      cursor:pointer;
+      color:var(--muted);
+    }
+    .tab.active{
+      background:var(--primary);
+      color:#fff;
+      border-color:var(--primary);
+    }
+    .view{display:none}
+    .view.active{display:block}
+    .grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:16px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .task-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .task-item{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .task-left{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .task-check{
+      margin-top:4px;
+      transform:scale(1.2);
+      cursor:pointer;
+    }
+    .task-title{
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    .task-desc{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.45;
+    }
+    .badge-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .badge{
+      font-size:12px;
+      border-radius:999px;
+      padding:4px 8px;
+      border:1px solid var(--line);
+      background:#f9fafb;
+    }
+    .overdue{
+      background:#fef2f2;
+      color:#b91c1c;
+      border-color:#fecaca;
+    }
+    .task-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .link-btn{
+      display:inline-flex;
+      text-decoration:none;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      padding:8px 10px;
+      border-radius:10px;
+      color:var(--text);
+      background:#fff;
+      font-size:13px;
+    }
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+    .stat{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:#fff;
+    }
+    .stat .k{
+      font-size:13px;
+      color:var(--muted);
+    }
+    .stat .v{
+      margin-top:6px;
+      font-size:24px;
+      font-weight:700;
+    }
+    .weekly-grid{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:10px;
+    }
+    .week-day{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      min-height:150px;
+    }
+    .week-day.today{
+      outline:2px solid var(--primary);
+      background:#f8fbff;
+    }
+    .week-day h4{
+      margin-bottom:8px;
+      font-size:14px;
+    }
+    .mini-task{
+      font-size:12px;
+      border-radius:10px;
+      padding:7px 8px;
+      background:#f9fafb;
+      border:1px solid var(--line);
+      margin-bottom:6px;
+    }
+    .mini-task.done{
+      opacity:.55;
+      text-decoration:line-through;
+    }
+    .form-row{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:12px;
+    }
+    .textarea{
+      min-height:110px;
+      resize:vertical;
+    }
+    .tiny-note{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .ok{color:var(--success)}
+    .warn{color:var(--warn)}
+    .danger{color:var(--danger)}
+    .footer-tools{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      z-index:50;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+    }
+    .safe-toggle{
+      border:none;
+      background:#111827;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 12px;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+      font-size:13px;
+    }
+    .report-panel{
+      width:min(360px,calc(100vw - 24px));
+      background:#fff;
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--line);
+      padding:12px;
+      display:none;
+    }
+    .report-panel.open{
+      display:block;
+    }
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .summary{grid-template-columns:1fr}
+      .weekly-grid{grid-template-columns:1fr}
+    }
+  </style>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="topbar-row">
-    <div>
-      <div class="app-title">Günlük Takip</div>
-      <div class="date-str" id="dateStr"></div>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <h1>Günlük Takip</h1>
+        <p class="muted">Günlük, haftalık, kelime tekrarı ve dinleme planı</p>
+      </div>
+      <div class="date-controls">
+        <button class="btn" id="prevDayBtn">← Önceki</button>
+        <input class="date-input" type="date" id="selectedDate" />
+        <button class="btn" id="nextDayBtn">Sonraki →</button>
+        <button class="btn primary" id="todayBtn">Bugün</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span class="streak-badge" id="streakBadge" style="display:none"></span>
-      <button class="reset-btn" onclick="resetDay()">Sıfırla</button>
+
+    <div class="tabs">
+      <button class="tab active" data-view="gunluk">Günlük</button>
+      <button class="tab" data-view="haftalik">Haftalık</button>
+      <button class="tab" data-view="kelime">Kelime Tekrarı</button>
+      <button class="tab" data-view="dinleme">Dinleme Planı</button>
+      <button class="tab" data-view="ayarlar">Ayarlar</button>
+    </div>
+
+    <section class="view active" id="view-gunluk">
+      <div class="grid">
+        <div class="card">
+          <div class="section-title">
+            <h2>Bugünün planı</h2>
+            <span class="muted" id="todayLabel"></span>
+          </div>
+          <div class="task-list" id="dailyTaskList"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h2>Özet</h2>
+          </div>
+
+          <div class="summary">
+            <div class="stat">
+              <div class="k">Toplam görev</div>
+              <div class="v" id="statTotal">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Tamamlanan</div>
+              <div class="v" id="statDone">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Kalan</div>
+              <div class="v" id="statLeft">0</div>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+
+          <div class="form-row">
+            <label for="dailyNote"><strong>Günlük not</strong></label>
+            <textarea id="dailyNote" class="textarea" placeholder="Bugün nasıl geçti?"></textarea>
+          </div>
+
+          <button class="btn" id="saveNoteBtn">Notu Kaydet</button>
+          <div class="tiny-note" id="noteStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-haftalik">
+      <div class="card">
+        <div class="section-title">
+          <h2>Haftalık görünüm</h2>
+          <span class="muted">Bu hafta hangi gün ne var</span>
+        </div>
+        <div class="weekly-grid" id="weeklyGrid"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-kelime">
+      <div class="grid">
+        <div class="card">
+          <div class="section-title">
+            <h2>Kelime tekrar planı</h2>
+            <span class="muted">Kaçarsa ertesi güne taşınır</span>
+          </div>
+          <div class="task-list" id="wordTaskList"></div>
+        </div>
+
+        <div class="card">
+          <h2>Kaynaklar</h2>
+          <div class="task-list">
+            <div class="task-item">
+              <div class="task-title">A1</div>
+              <div class="task-desc">Haftada 1 kez kontrol</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">A2</div>
+              <div class="task-desc">Haftada 1 kez kontrol</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">B1 Deel 1</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">B1 Deel 1 Aç</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">B1 Deel 2</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">B1 Deel 2 Aç</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">B2</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">B2 Aç</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-dinleme">
+      <div class="grid">
+        <div class="card">
+          <div class="section-title">
+            <h2>Bugünün dinleme görevi</h2>
+            <span class="muted">3 günlük döngü</span>
+          </div>
+          <div class="task-list" id="listeningTaskList"></div>
+        </div>
+
+        <div class="card">
+          <h2>Döngü planı</h2>
+          <div class="task-list">
+            <div class="task-item">
+              <div class="task-title">Gün 1</div>
+              <div class="task-desc">1–20</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs">Dinle</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">Gün 2</div>
+              <div class="task-desc">21–33</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=2804">Dinle</a>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-title">Gün 3</div>
+              <div class="task-desc">34–42</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=4808">Dinle</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-ayarlar">
+      <div class="grid">
+        <div class="card">
+          <h2>Ayarlar</h2>
+          <div class="form-row">
+            <label for="userName"><strong>Ad</strong></label>
+            <input id="userName" class="input" type="text" placeholder="Hasan" />
+          </div>
+          <div class="form-row">
+            <label for="b2Frequency"><strong>B2 sıklığı</strong></label>
+            <select id="b2Frequency" class="input">
+              <option value="1">Her gün</option>
+              <option value="2">2 günde bir</option>
+            </select>
+          </div>
+          <button class="btn primary" id="saveSettingsBtn">Ayarları Kaydet</button>
+          <div class="tiny-note" id="settingsStatus"></div>
+        </div>
+
+        <div class="card">
+          <h2>Mail ayarı</h2>
+          <p class="muted">Alıcı mail kod içinde sabit ayarlanır.</p>
+          <p class="tiny-note">Aşağıdaki değişkeni kendi mailinle doldur:</p>
+          <pre style="white-space:pre-wrap;background:#f9fafb;border:1px solid #e5e7eb;padding:10px;border-radius:12px;">const FIXED_REPORT_EMAIL = "mailadresin@example.com";</pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer-tools">
+    <button class="safe-toggle" id="reportToggleBtn">Rapor Gönder</button>
+    <div class="report-panel" id="reportPanel">
+      <div class="form-row">
+        <label for="confirmText"><strong>Onay</strong></label>
+        <input id="confirmText" class="input" type="text" placeholder='Göndermek için "EVET" yaz' />
+      </div>
+      <button class="btn primary small" id="sendReportBtn">Günlük raporu gönder</button>
+      <div class="tiny-note">Yanlışlıkla gitmesin diye korumalı alan.</div>
+      <div class="tiny-note" id="reportStatus"></div>
     </div>
   </div>
-  <div class="progress-wrap">
-    <div class="progress-info">
-      <span id="progressLabel">0 / 0 tamamlandı</span>
-      <span id="progressPct">0%</span>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-  </div>
-</div>
 
-<div class="content" id="taskList"></div>
-
-<div class="bottom-bar">
-  <button class="btn-report" id="reportBtn" onclick="sendReport()">📧 Günlük raporu gönder</button>
-  <button class="fab" onclick="openModal()" aria-label="Görev ekle">+</button>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3 id="modalTitle">Yeni görev</h3>
-    <label class="field-label">Görev adı</label>
-    <input class="field-input" type="text" id="mName" placeholder="Örn: 30 dk spor yap">
-    <label class="field-label">Kategori</label>
-    <select class="field-input" id="mCat">
-      <option value="spor">💚 Spor</option>
-      <option value="dil">🔵 Hollandaca</option>
-      <option value="is">🟠 İş / Teknik</option>
-      <option value="yasam">🩷 Yaşam</option>
-    </select>
-    <label class="field-label">Not (isteğe bağlı)</label>
-    <textarea class="field-input" id="mNote" placeholder="Hatırlatma, açıklama..."></textarea>
-    <label class="field-label">Link (isteğe bağlı)</label>
-    <input class="field-input" type="url" id="mLink" placeholder="https://...">
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">İptal</button>
-      <button class="btn-save" onclick="saveTask()">Kaydet</button>
-    </div>
-  </div>
-</div>
-
-<script>
-emailjs.init('fD5cr29ZVYp51xJ2T');
-
-const SERVICE_ID  = 'service_qv6p0ra';
-const TEMPLATE_ID = 'template_k524mw5';
-
-const CATS = {
-  spor:  { label: 'Spor' },
-  dil:   { label: 'Hollandaca' },
-  is:    { label: 'İş / Teknik' },
-  yasam: { label: 'Yaşam' }
-};
-
-const DEFAULTS = [
-  { id:1, name:'Fullbody antrenman (33-45 dk)', cat:'spor',  note:'Dumbell + vücut ağırlığı', link:'' },
-  { id:2, name:'Saat 23:30\'da telefonu bırak', cat:'yasam', note:'Twitter / sosyal medyayı kapat', link:'' },
-  { id:3, name:'Hollandaca film / dizi izle',   cat:'dil',   note:'Hollandaca altyazıyla', link:'' },
-  { id:4, name:'Instagram NL sayfası çalış',    cat:'dil',   note:'Bilmediğin paylaşımı kaydet', link:'' },
-  { id:5, name:'Teknik döküman oku (Enexis)',   cat:'is',    note:'MS/LS, GEN, GAIA konuları', link:'' },
-  { id:6, name:'Twitter süresini kısıt',        cat:'yasam', note:'Max 20 dk, NL hesapları takip et', link:'' },
-];
-
-function todayKey() { return 'day_' + new Date().toISOString().slice(0,10); }
-
-let data;
-function load() {
-  try { const r = localStorage.getItem('gorev_v2'); data = r ? JSON.parse(r) : null; }
-  catch(e) { data = null; }
-  if (!data) {
-    data = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), done: [], day: todayKey(), streak: 0 };
-    save(); return;
-  }
-  if (data.day !== todayKey()) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yKey = 'day_' + yesterday.toISOString().slice(0,10);
-    data.streak = (data.day === yKey && data.done.length > 0) ? (data.streak||0)+1 : 0;
-    data.done = [];
-    data.day = todayKey();
-    save();
-  }
-}
-function save() { localStorage.setItem('gorev_v2', JSON.stringify(data)); }
-
-function showToast(msg, duration) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration || 2500);
-}
-
-function sendReport() {
-  const btn = document.getElementById('reportBtn');
-  btn.classList.add('sending');
-  btn.textContent = '⏳ Gönderiliyor...';
-
-  const total = data.tasks.length;
-  const doneIds = data.done;
-  const doneTasks = data.tasks.filter(t => doneIds.includes(t.id));
-  const notDoneTasks = data.tasks.filter(t => !doneIds.includes(t.id));
-
-  const now = new Date();
-  const tarih = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-
-  const tamamlanan = doneTasks.length > 0
-    ? doneTasks.map(t => '• ' + t.name).join('\n')
-    : '— Yok';
-  const tamamlanmayan = notDoneTasks.length > 0
-    ? notDoneTasks.map(t => '• ' + t.name).join('\n')
-    : '— Hepsi tamamlandı 🎉';
-
-  emailjs.send(SERVICE_ID, TEMPLATE_ID, {
-    tarih: tarih,
-    tamamlanan_sayi: doneTasks.length,
-    toplam: total,
-    tamamlanan: tamamlanan,
-    tamamlanmayan: tamamlanmayan
-  }).then(() => {
-    btn.classList.remove('sending');
-    btn.textContent = '📧 Günlük raporu gönder';
-    showToast('✅ Rapor gönderildi!');
-  }).catch((err) => {
-    btn.classList.remove('sending');
-    btn.textContent = '📧 Günlük raporu gönder';
-    showToast('❌ Hata: ' + (err.text || 'Gönderilemedi'));
-  });
-}
-
-function render() {
-  const now = new Date();
-  document.getElementById('dateStr').textContent = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-
-  const sb = document.getElementById('streakBadge');
-  if (data.streak > 0) { sb.style.display=''; sb.textContent=data.streak+' gün 🔥'; }
-  else { sb.style.display='none'; }
-
-  const total = data.tasks.length;
-  const done = data.done.length;
-  const pct = total > 0 ? Math.round(done/total*100) : 0;
-  document.getElementById('progressLabel').textContent = done+' / '+total+' tamamlandı';
-  document.getElementById('progressPct').textContent = pct+'%';
-  document.getElementById('progressFill').style.width = pct+'%';
-
-  const groups = {};
-  Object.keys(CATS).forEach(k => groups[k]=[]);
-  data.tasks.forEach(t => { if(groups[t.cat]) groups[t.cat].push(t); });
-
-  let html = '';
-  let hasAny = false;
-  Object.entries(groups).forEach(([cat, tasks]) => {
-    if (!tasks.length) return;
-    hasAny = true;
-    html += '<div class="section-label">'+CATS[cat].label+'</div>';
-    tasks.forEach(t => {
-      const isDone = data.done.includes(t.id);
-      html += `<div class="task-card${isDone?' done':''}" onclick="toggle(${t.id})">
-        <div class="cat-dot dot-${t.cat}"></div>
-        <div class="check-circle">
-          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-            <path d="M1 5l3.5 3.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="task-body">
-          <div class="task-name">${esc(t.name)}</div>
-          ${t.note?`<div class="task-note">${esc(t.note)}</div>`:''}
-          ${t.link?`<a class="task-link" href="${esc(t.link)}" onclick="event.stopPropagation()" target="_blank">🔗 Linke git</a>`:''}
-        </div>
-        <div class="task-actions" onclick="event.stopPropagation()">
-          <button class="icon-btn" onclick="editTask(${t.id})">✏️</button>
-          <button class="icon-btn" onclick="deleteTask(${t.id})">🗑</button>
-        </div>
-      </div>`;
+  <script>
+    emailjs.init({
+      publicKey: "fD5cr29ZVYp51xJ2T"
     });
-  });
-  if (!hasAny) html = '<div class="empty-state">Henüz görev yok.<br>+ butonuna bas ve ekle.</div>';
-  document.getElementById('taskList').innerHTML = html;
-}
 
-function toggle(id) {
-  const idx = data.done.indexOf(id);
-  if (idx>=0) data.done.splice(idx,1); else data.done.push(id);
-  save(); render();
-}
-function resetDay() {
-  if (confirm('Bugünkü tüm işaretler sıfırlansın mı?')) { data.done=[]; save(); render(); }
-}
-function deleteTask(id) {
-  if (confirm('Bu görevi sil?')) {
-    data.tasks = data.tasks.filter(t=>t.id!==id);
-    data.done = data.done.filter(d=>d!==id);
-    save(); render();
-  }
-}
+    const FIXED_REPORT_EMAIL = "mailadresin@example.com";
 
-let editId = null;
-function openModal(id) {
-  editId = id||null;
-  if (id) {
-    const t = data.tasks.find(x=>x.id===id);
-    document.getElementById('modalTitle').textContent='Görevi düzenle';
-    document.getElementById('mName').value=t.name;
-    document.getElementById('mCat').value=t.cat;
-    document.getElementById('mNote').value=t.note||'';
-    document.getElementById('mLink').value=t.link||'';
-  } else {
-    document.getElementById('modalTitle').textContent='Yeni görev';
-    document.getElementById('mName').value='';
-    document.getElementById('mCat').value='yasam';
-    document.getElementById('mNote').value='';
-    document.getElementById('mLink').value='';
-  }
-  document.getElementById('modalOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('mName').focus(),100);
-}
-function editTask(id) { openModal(id); }
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-function saveTask() {
-  const name = document.getElementById('mName').value.trim();
-  if (!name) { document.getElementById('mName').focus(); return; }
-  const cat = document.getElementById('mCat').value;
-  const note = document.getElementById('mNote').value.trim();
-  const link = document.getElementById('mLink').value.trim();
-  if (editId) {
-    const t = data.tasks.find(x=>x.id===editId);
-    if (t) { t.name=name; t.cat=cat; t.note=note; t.link=link; }
-  } else {
-    const maxId = data.tasks.reduce((m,t)=>Math.max(m,t.id),0);
-    data.tasks.push({id:maxId+1,name,cat,note,link});
-  }
-  save(); render(); closeModal();
-}
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+    const STORAGE_KEYS = {
+      settings: "gunluk_takip_settings_v2",
+      completions: "gunluk_takip_completions_v2",
+      notes: "gunluk_takip_notes_v2",
+      ui: "gunluk_takip_ui_v2"
+    };
 
-load(); render();
-</script>
+    const DEFAULT_SETTINGS = {
+      userName: "",
+      b2Frequency: 1
+    };
+
+    const APP_START = "2025-01-01";
+
+    const LISTENING_CYCLE = [
+      {
+        id: "listen-1",
+        title: "Passport dinleme: 1–20",
+        description: "Bugün 1–20 arası dinle",
+        link: "https://youtu.be/a8_vN9sj6Cs",
+        label: "1–20"
+      },
+      {
+        id: "listen-2",
+        title: "Passport dinleme: 21–33",
+        description: "Bugün 21–33 arası dinle",
+        link: "https://youtu.be/a8_vN9sj6Cs?t=2804",
+        label: "21–33"
+      },
+      {
+        id: "listen-3",
+        title: "Passport dinleme: 34–42",
+        description: "Bugün 34–42 arası dinle",
+        link: "https://youtu.be/a8_vN9sj6Cs?t=4808",
+        label: "34–42"
+      }
+    ];
+
+    const B2_PARTS = [
+      "B2 / 1-10. sayfa",
+      "B2 / 11-20. sayfa",
+      "B2 / 21-30. sayfa",
+      "B2 / 31-40. sayfa",
+      "B2 / 41-50. sayfa",
+      "B2 / 51-60. sayfa",
+      "B2 / 61-70. sayfa",
+      "B2 / 71-80. sayfa",
+      "B2 / 81-90. sayfa",
+      "B2 / 91-100. sayfa",
+      "B2 / 101-105. sayfa"
+    ];
+
+    const state = {
+      selectedDate: todayISO(),
+      settings: loadJSON(STORAGE_KEYS.settings, DEFAULT_SETTINGS),
+      completions: loadJSON(STORAGE_KEYS.completions, {}),
+      notes: loadJSON(STORAGE_KEYS.notes, {}),
+      ui: loadJSON(STORAGE_KEYS.ui, { activeView: "gunluk" })
+    };
+
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function loadJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveJSON(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function parseLocalDate(iso) {
+      const [y,m,d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDateTR(iso) {
+      return parseLocalDate(iso).toLocaleDateString("tr-TR", {
+        weekday:"long",
+        year:"numeric",
+        month:"long",
+        day:"2-digit"
+      });
+    }
+
+    function addDays(iso, count) {
+      const dt = parseLocalDate(iso);
+      dt.setDate(dt.getDate() + count);
+      return dt.toISOString().slice(0,10);
+    }
+
+    function diffDays(aISO, bISO) {
+      const a = parseLocalDate(aISO);
+      const b = parseLocalDate(bISO);
+      return Math.floor((b - a) / 86400000);
+    }
+
+    function getWeekStart(iso) {
+      const dt = parseLocalDate(iso);
+      const day = dt.getDay() === 0 ? 7 : dt.getDay();
+      dt.setDate(dt.getDate() - (day - 1));
+      return dt.toISOString().slice(0,10);
+    }
+
+    function isTaskDone(taskId, dateISO) {
+      return !!state.completions[dateISO]?.[taskId];
+    }
+
+    function setTaskDone(taskId, dateISO, done) {
+      if (!state.completions[dateISO]) state.completions[dateISO] = {};
+      state.completions[dateISO][taskId] = done;
+      saveJSON(STORAGE_KEYS.completions, state.completions);
+    }
+
+    function esc(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function getListeningTaskForDate(dateISO) {
+      const idx = ((diffDays(APP_START, dateISO) % 3) + 3) % 3;
+      const selected = LISTENING_CYCLE[idx];
+      return {
+        id: selected.id,
+        type: "listen",
+        title: selected.title,
+        description: selected.description,
+        link: selected.link,
+        badges: ["Dinleme", selected.label]
+      };
+    }
+
+    function getWeeklyCarryTask(taskBaseId, title, link, desiredDateISO, weekdayIndex) {
+      const weekStart = getWeekStart(desiredDateISO);
+      const scheduled = addDays(weekStart, weekdayIndex - 1);
+
+      if (desiredDateISO < scheduled) return null;
+
+      const alreadyDone = Object.keys(state.completions).some(date => {
+        return getWeekStart(date) === getWeekStart(desiredDateISO) && state.completions[date][taskBaseId];
+      });
+
+      if (alreadyDone) return null;
+
+      return {
+        id: taskBaseId,
+        type: "weekly",
+        title,
+        description: "Bu haftanın tekrar görevi. Yapılmazsa sonraki güne taşınır.",
+        link,
+        overdue: desiredDateISO > scheduled,
+        badges: ["Haftalık tekrar"]
+      };
+    }
+
+    function getCompletedB2Count() {
+      let count = 0;
+      for (const date in state.completions) {
+        for (const taskId in state.completions[date]) {
+          if (state.completions[date][taskId] && taskId.startsWith("b2-part-")) {
+            count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function getB2TaskForDate(dateISO) {
+      const freq = Number(state.settings.b2Frequency || 1);
+      const completed = getCompletedB2Count();
+      const currentIndex = Math.min(completed, B2_PARTS.length - 1);
+      const shouldAppearFrom = completed * freq;
+      const passed = diffDays(APP_START, dateISO);
+
+      if (passed < shouldAppearFrom) return null;
+
+      return {
+        id: "b2-part-" + currentIndex,
+        type: "daily",
+        title: B2_PARTS[currentIndex],
+        description: "CodePlus B2 parçası. Yapılmazsa sonraki güne kayar.",
+        link: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
+        overdue: passed > shouldAppearFrom,
+        badges: ["B2", freq === 1 ? "Her gün" : "2 günde bir"]
+      };
+    }
+
+    function getTasksForDate(dateISO) {
+      const tasks = [];
+
+      const a1 = getWeeklyCarryTask(
+        "weekly-a1",
+        "A1 haftalık tekrar",
+        "https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link",
+        dateISO,
+        1
+      );
+      if (a1) tasks.push(a1);
+
+      const a2 = getWeeklyCarryTask(
+        "weekly-a2",
+        "A2 haftalık tekrar",
+        "https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link",
+        dateISO,
+        4
+      );
+      if (a2) tasks.push(a2);
+
+      const b2 = getB2TaskForDate(dateISO);
+      if (b2) tasks.push(b2);
+
+      tasks.push(getListeningTaskForDate(dateISO));
+
+      return tasks;
+    }
+
+    function renderBadges(task) {
+      let html = "";
+      if (task.type === "daily") html += `<span class="badge">Günlük</span>`;
+      if (task.type === "weekly") html += `<span class="badge">Haftalık</span>`;
+      if (task.type === "listen") html += `<span class="badge">Dinleme</span>`;
+      (task.badges || []).forEach(b => {
+        html += `<span class="badge">${esc(b)}</span>`;
+      });
+      if (task.overdue) html += `<span class="badge overdue">Gecikmiş</span>`;
+      return html;
+    }
+
+    function renderTaskList(containerId, tasks, dateISO) {
+      const el = document.getElementById(containerId);
+      if (!tasks.length) {
+        el.innerHTML = `<div class="task-item"><div class="task-desc">Görev yok</div></div>`;
+        return;
+      }
+
+      el.innerHTML = tasks.map(task => `
+        <div class="task-item">
+          <div class="task-left">
+            <input class="task-check" type="checkbox" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}" ${isTaskDone(task.id, dateISO) ? "checked" : ""}>
+            <div>
+              <div class="task-title">${esc(task.title)}</div>
+              <div class="task-desc">${esc(task.description || "")}</div>
+              <div class="badge-row">${renderBadges(task)}</div>
+              <div class="task-actions">
+                ${task.link ? `<a class="link-btn" target="_blank" href="${esc(task.link)}">Kaynağı Aç</a>` : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      el.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener("change", e => {
+          setTaskDone(e.target.dataset.taskId, e.target.dataset.date, e.target.checked);
+          renderAll();
+        });
+      });
+    }
+
+    function renderDaily() {
+      const dateISO = state.selectedDate;
+      document.getElementById("todayLabel").textContent = formatDateTR(dateISO);
+
+      const tasks = getTasksForDate(dateISO);
+      renderTaskList("dailyTaskList", tasks, dateISO);
+
+      const total = tasks.length;
+      const done = tasks.filter(t => isTaskDone(t.id, dateISO)).length;
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statDone").textContent = done;
+      document.getElementById("statLeft").textContent = total - done;
+
+      document.getElementById("dailyNote").value = state.notes[dateISO] || "";
+    }
+
+    function renderWeekly() {
+      const weekStart = getWeekStart(state.selectedDate);
+      const grid = document.getElementById("weeklyGrid");
+      let html = "";
+
+      for (let i = 0; i < 7; i++) {
+        const d = addDays(weekStart, i);
+        const tasks = getTasksForDate(d);
+        html += `
+          <div class="week-day ${d === todayISO() ? "today" : ""}">
+            <h4>${parseLocalDate(d).toLocaleDateString("tr-TR", { weekday:"short", day:"2-digit", month:"2-digit" })}</h4>
+            ${
+              tasks.length
+                ? tasks.map(task => `<div class="mini-task ${isTaskDone(task.id, d) ? "done" : ""}">${esc(task.title)}</div>`).join("")
+                : `<div class="mini-task">Görev yok</div>`
+            }
+          </div>
+        `;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function renderWordView() {
+      const dateISO = state.selectedDate;
+      const tasks = getTasksForDate(dateISO).filter(t =>
+        t.id.startsWith("weekly-a1") ||
+        t.id.startsWith("weekly-a2") ||
+        t.id.startsWith("b2-part-")
+      );
+      renderTaskList("wordTaskList", tasks, dateISO);
+    }
+
+    function renderListeningView() {
+      renderTaskList("listeningTaskList", [getListeningTaskForDate(state.selectedDate)], state.selectedDate);
+    }
+
+    function renderSettings() {
+      document.getElementById("userName").value = state.settings.userName || "";
+      document.getElementById("b2Frequency").value = String(state.settings.b2Frequency || 1);
+    }
+
+    function renderTabs() {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.view === state.ui.activeView);
+      });
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-" + state.ui.activeView).classList.add("active");
+    }
+
+    function renderAll() {
+      document.getElementById("selectedDate").value = state.selectedDate;
+      renderTabs();
+      renderDaily();
+      renderWeekly();
+      renderWordView();
+      renderListeningView();
+      renderSettings();
+    }
+
+    function buildReportText(dateISO) {
+      const tasks = getTasksForDate(dateISO);
+      const done = tasks.filter(t => isTaskDone(t.id, dateISO));
+      const notDone = tasks.filter(t => !isTaskDone(t.id, dateISO));
+      const note = state.notes[dateISO] || "-";
+
+      return [
+        `Tarih: ${formatDateTR(dateISO)}`,
+        `Ad: ${state.settings.userName || "-"}`,
+        "",
+        "Tamamlanan görevler:",
+        ...(done.length ? done.map(t => `- ${t.title}`) : ["- Yok"]),
+        "",
+        "Eksik kalan görevler:",
+        ...(notDone.length ? notDone.map(t => `- ${t.title}`) : ["- Yok"]),
+        "",
+        "Not:",
+        note
+      ].join("\n");
+    }
+
+    async function sendReport() {
+      const status = document.getElementById("reportStatus");
+      const confirmText = document.getElementById("confirmText").value.trim();
+
+      if (confirmText !== "EVET") {
+        status.textContent = 'Göndermek için "EVET" yaz';
+        status.className = "tiny-note danger";
+        return;
+      }
+
+      if (!FIXED_REPORT_EMAIL || FIXED_REPORT_EMAIL.includes("example.com")) {
+        status.textContent = "Önce kod içinde sabit mail adresini yaz";
+        status.className = "tiny-note danger";
+        return;
+      }
+
+      try {
+        status.textContent = "Gönderiliyor...";
+        status.className = "tiny-note warn";
+
+        await emailjs.send("service_qv6p0ra", "template_k524mw5", {
+          to_email: FIXED_REPORT_EMAIL,
+          user_name: state.settings.userName || "Kullanıcı",
+          report_date: state.selectedDate,
+          message: buildReportText(state.selectedDate)
+        });
+
+        status.textContent = "Rapor gönderildi";
+        status.className = "tiny-note ok";
+        document.getElementById("confirmText").value = "";
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Mail gönderimi başarısız. Template değişkenlerini kontrol et.";
+        status.className = "tiny-note danger";
+      }
+    }
+
+    document.getElementById("selectedDate").addEventListener("change", e => {
+      state.selectedDate = e.target.value;
+      renderAll();
+    });
+
+    document.getElementById("todayBtn").addEventListener("click", () => {
+      state.selectedDate = todayISO();
+      renderAll();
+    });
+
+    document.getElementById("prevDayBtn").addEventListener("click", () => {
+      state.selectedDate = addDays(state.selectedDate, -1);
+      renderAll();
+    });
+
+    document.getElementById("nextDayBtn").addEventListener("click", () => {
+      state.selectedDate = addDays(state.selectedDate, 1);
+      renderAll();
+    });
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        state.ui.activeView = tab.dataset.view;
+        saveJSON(STORAGE_KEYS.ui, state.ui);
+        renderAll();
+      });
+    });
+
+    document.getElementById("saveNoteBtn").addEventListener("click", () => {
+      state.notes[state.selectedDate] = document.getElementById("dailyNote").value.trim();
+      saveJSON(STORAGE_KEYS.notes, state.notes);
+      const el = document.getElementById("noteStatus");
+      el.textContent = "Not kaydedildi";
+      el.className = "tiny-note ok";
+      setTimeout(() => {
+        el.textContent = "";
+        el.className = "tiny-note";
+      }, 1500);
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+      state.settings.userName = document.getElementById("userName").value.trim();
+      state.settings.b2Frequency = Number(document.getElementById("b2Frequency").value || 1);
+      saveJSON(STORAGE_KEYS.settings, state.settings);
+      const el = document.getElementById("settingsStatus");
+      el.textContent = "Ayarlar kaydedildi";
+      el.className = "tiny-note ok";
+      renderAll();
+      setTimeout(() => {
+        el.textContent = "";
+        el.className = "tiny-note";
+      }, 1500);
+    });
+
+    document.getElementById("reportToggleBtn").addEventListener("click", () => {
+      document.getElementById("reportPanel").classList.toggle("open");
+    });
+
+    document.getElementById("sendReportBtn").addEventListener("click", sendReport);
+
+    renderAll();
+  </script>
 </body>
 </html>
