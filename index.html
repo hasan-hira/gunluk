@@ -123,6 +123,12 @@
       padding:8px 10px;
     }
 
+    .btn.icon{
+      min-width:36px;
+      padding:7px 10px;
+      font-size:13px;
+    }
+
     .date-controls{
       display:flex;
       gap:8px;
@@ -257,6 +263,8 @@
       align-items:center;
       margin:0;
       flex-shrink:0;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .link-btn{
@@ -312,7 +320,7 @@
 
     .inline-form{
       display:grid;
-      grid-template-columns:1fr 180px 1fr auto;
+      grid-template-columns:1.1fr 180px 1fr auto;
       gap:8px;
       margin-bottom:14px;
     }
@@ -590,12 +598,12 @@
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_compact_v2",
-      completions: "gunluk_takip_completions_compact_v2",
-      notes: "gunluk_takip_notes_compact_v2",
-      ui: "gunluk_takip_ui_compact_v2",
-      manualTasks: "gunluk_takip_manual_tasks_compact_v2",
-      recurringTasks: "gunluk_takip_recurring_tasks_compact_v2"
+      settings: "gunluk_takip_settings_sort_v1",
+      completions: "gunluk_takip_completions_sort_v1",
+      notes: "gunluk_takip_notes_sort_v1",
+      ui: "gunluk_takip_ui_sort_v1",
+      manualTasks: "gunluk_takip_manual_tasks_sort_v1",
+      recurringTasks: "gunluk_takip_recurring_tasks_sort_v1"
     };
 
     const DEFAULT_SETTINGS = {
@@ -610,7 +618,8 @@
       a2: "https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link",
       b1d1: "https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
       b1d2: "https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
-      b2: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link"
+      b2: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
+      instagramDaily: "https://www.instagram.com/reel/DYjMBLntz2r/?utm_source=ig_web_button_share_sheet&igsh=MzRlODBiNWFlZA=="
     };
 
     const DELFT_SERIES = [
@@ -706,11 +715,11 @@
     }
 
     function getManualTasks(dateISO) {
-      return state.manualTasks[dateISO] || [];
+      return (state.manualTasks[dateISO] || []).slice().sort((a,b) => (a.order || 0) - (b.order || 0));
     }
 
     function getRecurringTasks() {
-      return state.recurringTasks || [];
+      return (state.recurringTasks || []).slice().sort((a,b) => (a.order || 0) - (b.order || 0));
     }
 
     function addTask(title, type, dateISO, linkValue) {
@@ -719,24 +728,34 @@
       if (!trimmed) return;
 
       if (type === "daily") {
+        const maxOrder = state.recurringTasks.length
+          ? Math.max(...state.recurringTasks.map(t => t.order || 0))
+          : 0;
+
         state.recurringTasks.push({
           id: "recurring-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
           title: trimmed,
           type: "manual-recurring",
           description: "",
           badges: ["Her gün"],
-          link
+          link,
+          order: maxOrder + 1
         });
         saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
       } else {
         if (!state.manualTasks[dateISO]) state.manualTasks[dateISO] = [];
+        const maxOrder = state.manualTasks[dateISO].length
+          ? Math.max(...state.manualTasks[dateISO].map(t => t.order || 0))
+          : 0;
+
         state.manualTasks[dateISO].push({
           id: "manual-" + Date.now() + "-" + Math.floor(Math.random() * 10000),
           title: trimmed,
           type: "manual",
           description: "",
           badges: ["Tek gün"],
-          link
+          link,
+          order: maxOrder + 1
         });
         saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
       }
@@ -760,6 +779,45 @@
         }
       }
       saveJSON(STORAGE_KEYS.completions, state.completions);
+      saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
+    }
+
+    function moveManualTask(dateISO, taskId, direction) {
+      const arr = state.manualTasks[dateISO] || [];
+      const sorted = arr.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+      const index = sorted.findIndex(t => t.id === taskId);
+      if (index === -1) return;
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+      const current = sorted[index];
+      const target = sorted[targetIndex];
+
+      const temp = current.order || index;
+      current.order = target.order || targetIndex;
+      target.order = temp;
+
+      state.manualTasks[dateISO] = sorted;
+      saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
+    }
+
+    function moveRecurringTask(taskId, direction) {
+      const sorted = state.recurringTasks.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+      const index = sorted.findIndex(t => t.id === taskId);
+      if (index === -1) return;
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+      const current = sorted[index];
+      const target = sorted[targetIndex];
+
+      const temp = current.order || index;
+      current.order = target.order || targetIndex;
+      target.order = temp;
+
+      state.recurringTasks = sorted;
       saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
     }
 
@@ -881,7 +939,11 @@
         { id:"routine-walk", type:"daily", title:"Fullbody yada yürüyüşe çık", description:"", badges:["Günlük","Rutin"] },
         { id:"routine-film", type:"daily", title:"Film izle", description:"", badges:["Günlük","Rutin"] },
         { id:"routine-twitter", type:"daily", title:"Twitter süresini kısalt", description:"", badges:["Günlük","Rutin"] },
-        { id:"routine-phone", type:"daily", title:"Telefonu 22.30'da bırak", description:"", badges:["Günlük","Rutin"] }
+        { id:"routine-phone", type:"daily", title:"Telefonu 22.30'da bırak", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-call-message", type:"daily", title:"Birini ara veya mesaj at", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-zikir", type:"daily", title:"Günlük zikirler", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-kuran", type:"daily", title:"Kuran oku", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-instagram", type:"daily", title:"Instagram", description:"", badges:["Günlük","Rutin"], link: LINKS.instagramDaily }
       );
 
       if (day === 5 || day === 6 || day === 0) {
@@ -952,10 +1014,21 @@
         const done = isTaskDone(task.id, dateISO);
 
         let deleteButton = "";
+        let moveButtons = "";
+
         if (allowDelete && task.type === "manual") {
+          moveButtons = `
+            <button class="btn icon move-up-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↑</button>
+            <button class="btn icon move-down-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">↓</button>
+          `;
           deleteButton = `<button class="btn small danger-btn delete-manual-btn" data-task-id="${esc(task.id)}" data-date="${esc(dateISO)}">Sil</button>`;
         }
+
         if (allowDelete && task.type === "manual-recurring") {
+          moveButtons = `
+            <button class="btn icon move-up-recurring-btn" data-task-id="${esc(task.id)}">↑</button>
+            <button class="btn icon move-down-recurring-btn" data-task-id="${esc(task.id)}">↓</button>
+          `;
           deleteButton = `<button class="btn small danger-btn delete-recurring-btn" data-task-id="${esc(task.id)}">Sil</button>`;
         }
 
@@ -973,6 +1046,7 @@
 
               <div class="task-actions">
                 ${task.link ? `<a class="link-btn" target="_blank" href="${esc(task.link)}">Kaynağı Aç</a>` : ""}
+                ${moveButtons}
                 ${deleteButton}
               </div>
             </div>
@@ -1000,6 +1074,34 @@
           renderAll();
         });
       });
+
+      el.querySelectorAll(".move-up-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          moveManualTask(e.target.dataset.date, e.target.dataset.taskId, "up");
+          renderAll();
+        });
+      });
+
+      el.querySelectorAll(".move-down-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          moveManualTask(e.target.dataset.date, e.target.dataset.taskId, "down");
+          renderAll();
+        });
+      });
+
+      el.querySelectorAll(".move-up-recurring-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          moveRecurringTask(e.target.dataset.taskId, "up");
+          renderAll();
+        });
+      });
+
+      el.querySelectorAll(".move-down-recurring-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          moveRecurringTask(e.target.dataset.taskId, "down");
+          renderAll();
+        });
+      });
     }
 
     function renderDaily() {
@@ -1015,6 +1117,7 @@
       document.getElementById("statTotal").textContent = total;
       document.getElementById("statDone").textContent = done;
       document.getElementById("statLeft").textContent = total - done;
+
       document.getElementById("dailyNote").value = state.notes[dateISO] || "";
     }
 
