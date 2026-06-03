@@ -420,7 +420,7 @@
           </div>
 
           <div class="inline-form">
-            <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle: spor, yürüyüş, film, hatırlatma..." />
+            <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle: spor, yürüyüş, market, film..." />
             <button class="btn primary" id="addManualTaskBtn">Görev Ekle</button>
           </div>
 
@@ -451,7 +451,7 @@
 
           <div class="form-row">
             <label for="dailyNote"><strong>Günlük not</strong></label>
-            <textarea id="dailyNote" class="textarea" placeholder="Bugün nasıldı? Neler eksik kaldı?"></textarea>
+            <textarea id="dailyNote" class="textarea" placeholder="Bugün nasıldı?"></textarea>
           </div>
 
           <button class="btn" id="saveNoteBtn">Notu Kaydet</button>
@@ -464,7 +464,7 @@
       <div class="card">
         <div class="section-title">
           <h2>Haftalık görünüm</h2>
-          <span class="muted">Hazır görevler + kendi eklediklerin</span>
+          <span class="muted">Hazır görevler + kişisel görevler</span>
         </div>
         <div class="weekly-grid" id="weeklyGrid"></div>
       </div>
@@ -488,28 +488,24 @@
                 <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a>
               </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">A2</div>
               <div class="task-actions">
                 <a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a>
               </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">B1 Deel 1</div>
               <div class="task-actions">
                 <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a>
               </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">B1 Deel 2</div>
               <div class="task-actions">
                 <a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a>
               </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">B2</div>
               <div class="task-actions">
@@ -537,25 +533,14 @@
             <div class="task-item">
               <div class="task-title">Gün 1</div>
               <div class="task-desc">1–20</div>
-              <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs">Dinle</a>
-              </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">Gün 2</div>
               <div class="task-desc">21–33</div>
-              <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=2804">Dinle</a>
-              </div>
             </div>
-
             <div class="task-item">
               <div class="task-title">Gün 3</div>
               <div class="task-desc">34–42</div>
-              <div class="task-actions">
-                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=4808">Dinle</a>
-              </div>
             </div>
           </div>
         </div>
@@ -615,11 +600,11 @@
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_final",
-      completions: "gunluk_takip_completions_final",
-      notes: "gunluk_takip_notes_final",
-      ui: "gunluk_takip_ui_final",
-      manualTasks: "gunluk_takip_manual_tasks_final"
+      settings: "gunluk_takip_settings_final_v2",
+      completions: "gunluk_takip_completions_final_v2",
+      notes: "gunluk_takip_notes_final_v2",
+      ui: "gunluk_takip_ui_final_v2",
+      manualTasks: "gunluk_takip_manual_tasks_final_v2"
     };
 
     const DEFAULT_SETTINGS = {
@@ -788,11 +773,13 @@
 
       if (desiredDateISO < scheduled) return null;
 
-      const alreadyDone = Object.keys(state.completions).some(date => {
+      const alreadyDoneInThisWeek = Object.keys(state.completions).some(date => {
         return getWeekStart(date) === getWeekStart(desiredDateISO) && state.completions[date][taskBaseId];
       });
 
-      if (alreadyDone) return null;
+      const doneToday = isTaskDone(taskBaseId, desiredDateISO);
+
+      if (alreadyDoneInThisWeek && !doneToday) return null;
 
       return {
         id: taskBaseId,
@@ -800,31 +787,46 @@
         title,
         description: "Bu haftanın tekrar görevi. Yapılmazsa sonraki güne taşınır.",
         link,
-        overdue: desiredDateISO > scheduled,
+        overdue: desiredDateISO > scheduled && !doneToday,
         badges: ["Haftalık tekrar"]
       };
     }
 
-    function getCompletedB2Count() {
-      let count = 0;
+    function getCompletedB2Dates() {
+      const out = [];
       for (const date in state.completions) {
         for (const taskId in state.completions[date]) {
           if (state.completions[date][taskId] && taskId.startsWith("b2-part-")) {
-            count++;
+            out.push({ date, taskId });
           }
         }
       }
-      return count;
+      return out.sort((a,b) => a.date.localeCompare(b.date));
     }
 
     function getB2TaskForDate(dateISO) {
       const freq = Number(state.settings.b2Frequency || 1);
-      const completed = getCompletedB2Count();
-      const currentIndex = Math.min(completed, B2_PARTS.length - 1);
-      const shouldAppearFrom = completed * freq;
-      const passed = diffDays(APP_START, dateISO);
+      const completedList = getCompletedB2Dates();
 
-      if (passed < shouldAppearFrom) return null;
+      const doneTodayEntry = completedList.find(x => x.date === dateISO);
+      if (doneTodayEntry) {
+        const idx = Number(doneTodayEntry.taskId.replace("b2-part-",""));
+        return {
+          id: "b2-part-" + idx,
+          type: "daily",
+          title: B2_PARTS[idx],
+          description: "CodePlus B2 parçası",
+          link: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
+          overdue: false,
+          badges: ["B2", freq === 1 ? "Her gün" : "2 günde bir"]
+        };
+      }
+
+      let completedCount = completedList.length;
+      let currentIndex = Math.min(completedCount, B2_PARTS.length - 1);
+
+      const startDate = addDays(APP_START, completedCount * freq);
+      if (dateISO < startDate) return null;
 
       return {
         id: "b2-part-" + currentIndex,
@@ -832,7 +834,7 @@
         title: B2_PARTS[currentIndex],
         description: "CodePlus B2 parçası. Yapılmazsa sonraki güne kayar.",
         link: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
-        overdue: passed > shouldAppearFrom,
+        overdue: dateISO > startDate,
         badges: ["B2", freq === 1 ? "Her gün" : "2 günde bir"]
       };
     }
@@ -876,12 +878,8 @@
       if (task.type === "weekly") html += `<span class="badge">Haftalık</span>`;
       if (task.type === "daily") html += `<span class="badge">Günlük</span>`;
       if (task.type === "listen") html += `<span class="badge">Dinleme</span>`;
-      (task.badges || []).forEach(b => {
-        html += `<span class="badge">${esc(b)}</span>`;
-      });
-      if (task.overdue) {
-        html += `<span class="badge overdue">Gecikmiş</span>`;
-      }
+      (task.badges || []).forEach(b => html += `<span class="badge">${esc(b)}</span>`);
+      if (task.overdue) html += `<span class="badge overdue">Gecikmiş</span>`;
       return html;
     }
 
@@ -994,7 +992,6 @@
       document.querySelectorAll(".tab").forEach(tab => {
         tab.classList.toggle("active", tab.dataset.view === state.ui.activeView);
       });
-
       document.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
       document.getElementById("view-" + state.ui.activeView).classList.add("active");
     }
