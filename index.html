@@ -1,3 +1,24 @@
+Tamam. Aşağıda sana tek parça, baştan yazılmış, düzeltilmiş `index.html` veriyorum.
+
+Bu sürümde:
+- günlük manuel görev ekleme var (`Yeni görev` mantığı korunuyor) [1]
+- `Özet` alanı var: toplam / tamamlanan / kalan [1]
+- `Ayarlar` bölümü var [1]
+- A1, A2, B1 Deel 1, B1 Deel 2 ve B2 görev planı var
+- tik atılan görevler kaybolmaz, o günün programında kalır
+- sadece üzeri çizilir
+- B2 aynı gün içinde bir sonraki parçaya atlamaz
+- ertesi gün sıradaki parçadan devam eder
+- haftalık görünüm var
+- dinleme planı var
+- küçük güvenli rapor gönderme alanı var
+
+Sadece şu satırı kendi mailinle değiştir:
+```js
+const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
+```
+
+```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -35,7 +56,7 @@
     }
 
     .app{
-      max-width:1100px;
+      max-width:1200px;
       margin:0 auto;
       padding:16px 16px 100px;
     }
@@ -49,13 +70,9 @@
       margin-bottom:16px;
     }
 
-    h1,h2,h3,h4,p{
-      margin:0;
-    }
+    h1,h2,h3,h4,p{margin:0}
 
-    .muted{
-      color:var(--muted);
-    }
+    .muted{color:var(--muted)}
 
     .tabs{
       display:flex;
@@ -533,14 +550,23 @@
             <div class="task-item">
               <div class="task-title">Gün 1</div>
               <div class="task-desc">1–20</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs">Dinle</a>
+              </div>
             </div>
             <div class="task-item">
               <div class="task-title">Gün 2</div>
               <div class="task-desc">21–33</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=2804">Dinle</a>
+              </div>
             </div>
             <div class="task-item">
               <div class="task-title">Gün 3</div>
               <div class="task-desc">34–42</div>
+              <div class="task-actions">
+                <a class="link-btn" target="_blank" href="https://youtu.be/a8_vN9sj6Cs?t=4808">Dinle</a>
+              </div>
             </div>
           </div>
         </div>
@@ -600,11 +626,11 @@
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_final_v2",
-      completions: "gunluk_takip_completions_final_v2",
-      notes: "gunluk_takip_notes_final_v2",
-      ui: "gunluk_takip_ui_final_v2",
-      manualTasks: "gunluk_takip_manual_tasks_final_v2"
+      settings: "gunluk_takip_settings_final_v3",
+      completions: "gunluk_takip_completions_final_v3",
+      notes: "gunluk_takip_notes_final_v3",
+      ui: "gunluk_takip_ui_final_v3",
+      manualTasks: "gunluk_takip_manual_tasks_final_v3"
     };
 
     const DEFAULT_SETTINGS = {
@@ -613,6 +639,14 @@
     };
 
     const APP_START = "2025-01-01";
+
+    const LINKS = {
+      a1: "https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link",
+      a2: "https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link",
+      b1d1: "https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
+      b1d2: "https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true",
+      b2: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link"
+    };
 
     const LISTENING_CYCLE = [
       {
@@ -770,16 +804,20 @@
     function getWeeklyCarryTask(taskBaseId, title, link, desiredDateISO, weekdayIndex) {
       const weekStart = getWeekStart(desiredDateISO);
       const scheduled = addDays(weekStart, weekdayIndex - 1);
+      const doneToday = isTaskDone(taskBaseId, desiredDateISO);
 
       if (desiredDateISO < scheduled) return null;
 
-      const alreadyDoneInThisWeek = Object.keys(state.completions).some(date => {
-        return getWeekStart(date) === getWeekStart(desiredDateISO) && state.completions[date][taskBaseId];
+      const alreadyDoneEarlierThisWeek = Object.keys(state.completions).some(date => {
+        return (
+          date !== desiredDateISO &&
+          getWeekStart(date) === getWeekStart(desiredDateISO) &&
+          state.completions[date] &&
+          state.completions[date][taskBaseId]
+        );
       });
 
-      const doneToday = isTaskDone(taskBaseId, desiredDateISO);
-
-      if (alreadyDoneInThisWeek && !doneToday) return null;
+      if (alreadyDoneEarlierThisWeek) return null;
 
       return {
         id: taskBaseId,
@@ -792,49 +830,50 @@
       };
     }
 
-    function getCompletedB2Dates() {
-      const out = [];
+    function getB2CompletedEntries() {
+      const completedEntries = [];
       for (const date in state.completions) {
         for (const taskId in state.completions[date]) {
           if (state.completions[date][taskId] && taskId.startsWith("b2-part-")) {
-            out.push({ date, taskId });
+            completedEntries.push({ date, taskId });
           }
         }
       }
-      return out.sort((a,b) => a.date.localeCompare(b.date));
+      completedEntries.sort((a, b) => a.date.localeCompare(b.date));
+      return completedEntries;
     }
 
     function getB2TaskForDate(dateISO) {
       const freq = Number(state.settings.b2Frequency || 1);
-      const completedList = getCompletedB2Dates();
+      const completedEntries = getB2CompletedEntries();
 
-      const doneTodayEntry = completedList.find(x => x.date === dateISO);
-      if (doneTodayEntry) {
-        const idx = Number(doneTodayEntry.taskId.replace("b2-part-",""));
+      const todayDone = completedEntries.find(x => x.date === dateISO);
+      if (todayDone) {
+        const idx = Number(todayDone.taskId.replace("b2-part-",""));
         return {
           id: "b2-part-" + idx,
           type: "daily",
           title: B2_PARTS[idx],
           description: "CodePlus B2 parçası",
-          link: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
+          link: LINKS.b2,
           overdue: false,
           badges: ["B2", freq === 1 ? "Her gün" : "2 günde bir"]
         };
       }
 
-      let completedCount = completedList.length;
-      let currentIndex = Math.min(completedCount, B2_PARTS.length - 1);
+      const completedCount = completedEntries.length;
+      const currentIndex = Math.min(completedCount, B2_PARTS.length - 1);
+      const availableDate = addDays(APP_START, completedCount * freq);
 
-      const startDate = addDays(APP_START, completedCount * freq);
-      if (dateISO < startDate) return null;
+      if (dateISO < availableDate) return null;
 
       return {
         id: "b2-part-" + currentIndex,
         type: "daily",
         title: B2_PARTS[currentIndex],
         description: "CodePlus B2 parçası. Yapılmazsa sonraki güne kayar.",
-        link: "https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link",
-        overdue: dateISO > startDate,
+        link: LINKS.b2,
+        overdue: dateISO > availableDate,
         badges: ["B2", freq === 1 ? "Her gün" : "2 günde bir"]
       };
     }
@@ -842,23 +881,17 @@
     function getAutoTasksForDate(dateISO) {
       const tasks = [];
 
-      const a1 = getWeeklyCarryTask(
-        "weekly-a1",
-        "A1 haftalık tekrar",
-        "https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link",
-        dateISO,
-        1
-      );
+      const a1 = getWeeklyCarryTask("weekly-a1", "A1 haftalık tekrar", LINKS.a1, dateISO, 1);
       if (a1) tasks.push(a1);
 
-      const a2 = getWeeklyCarryTask(
-        "weekly-a2",
-        "A2 haftalık tekrar",
-        "https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link",
-        dateISO,
-        4
-      );
+      const a2 = getWeeklyCarryTask("weekly-a2", "A2 haftalık tekrar", LINKS.a2, dateISO, 4);
       if (a2) tasks.push(a2);
+
+      const b1d1 = getWeeklyCarryTask("weekly-b1-deel1", "B1 Deel 1 tekrar", LINKS.b1d1, dateISO, 2);
+      if (b1d1) tasks.push(b1d1);
+
+      const b1d2 = getWeeklyCarryTask("weekly-b1-deel2", "B1 Deel 2 tekrar", LINKS.b1d2, dateISO, 5);
+      if (b1d2) tasks.push(b1d2);
 
       const b2 = getB2TaskForDate(dateISO);
       if (b2) tasks.push(b2);
@@ -974,6 +1007,8 @@
       const tasks = getAutoTasksForDate(dateISO).filter(t =>
         t.id.startsWith("weekly-a1") ||
         t.id.startsWith("weekly-a2") ||
+        t.id.startsWith("weekly-b1-deel1") ||
+        t.id.startsWith("weekly-b1-deel2") ||
         t.id.startsWith("b2-part-")
       );
       renderTaskList("wordTaskList", tasks, dateISO, false);
@@ -1149,3 +1184,4 @@
   </script>
 </body>
 </html>
+```
