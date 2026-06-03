@@ -27,7 +27,6 @@
     }
 
     *{box-sizing:border-box}
-
     body{
       margin:0;
       font-family:Arial,sans-serif;
@@ -50,13 +49,8 @@
       margin-bottom:16px;
     }
 
-    h1,h2,h3,h4,p{
-      margin:0;
-    }
-
-    .muted{
-      color:var(--muted);
-    }
+    h1,h2,h3,h4,p{margin:0}
+    .muted{color:var(--muted)}
 
     .tabs{
       display:flex;
@@ -318,7 +312,7 @@
 
     .inline-form{
       display:grid;
-      grid-template-columns:1fr 180px auto;
+      grid-template-columns:1fr 180px 1fr auto;
       gap:8px;
       margin-bottom:14px;
     }
@@ -448,11 +442,12 @@
           </div>
 
           <div class="inline-form">
-            <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle: spor, yürüyüş, market, film..." />
+            <input id="manualTaskInput" class="input" type="text" placeholder="Yeni görev ekle..." />
             <select id="manualTaskType" class="input">
               <option value="once">Sadece bugün</option>
               <option value="daily">Her gün</option>
             </select>
+            <input id="manualTaskLink" class="input" type="url" placeholder="Kaynak linki (isteğe bağlı)" />
             <button class="btn primary" id="addManualTaskBtn">Görev Ekle</button>
           </div>
 
@@ -496,7 +491,6 @@
       <div class="card">
         <div class="section-title">
           <h2>Haftalık görünüm</h2>
-          <span class="muted">Hazır görevler + kişisel görevler</span>
         </div>
         <div class="weekly-grid" id="weeklyGrid"></div>
       </div>
@@ -514,11 +508,11 @@
         <div class="card">
           <h2>Kaynaklar</h2>
           <div class="task-list">
-            <div class="task-item"><div class="task-title">A1</div></div>
-            <div class="task-item"><div class="task-title">A2</div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 1</div></div>
-            <div class="task-item"><div class="task-title">B1 Deel 2</div></div>
-            <div class="task-item"><div class="task-title">B2</div></div>
+            <div class="task-item"><div class="task-title">A1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1HkcFGDjkSNVGlB_2-OlPa6m69e8Z2hqL/view?usp=drive_link">A1 Aç</a></div></div>
+            <div class="task-item"><div class="task-title">A2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1npM-L3uNsjF7p6r43V1EYmOZfYkNvZ3V/view?usp=drive_link">A2 Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 1</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1cW9LZgpEgTTYb4Df6-Dup6DlcrpwbxLs/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B1 Deel 2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://docs.google.com/spreadsheets/d/1jJuo-my1SlAkf6xi6NilNk0HWutFwrVl/edit?usp=drive_link&ouid=109841082785683493374&rtpof=true&sd=true">Aç</a></div></div>
+            <div class="task-item"><div class="task-title">B2</div><div class="task-actions"><a class="link-btn" target="_blank" href="https://drive.google.com/file/d/1YsFUaCpowZF3eyctSJla0oFhEPY8yDmm/view?usp=drive_link">Aç</a></div></div>
           </div>
         </div>
       </div>
@@ -596,12 +590,12 @@
     const FIXED_REPORT_EMAIL = "[EMAIL_REDACTED]";
 
     const STORAGE_KEYS = {
-      settings: "gunluk_takip_settings_compact",
-      completions: "gunluk_takip_completions_compact",
-      notes: "gunluk_takip_notes_compact",
-      ui: "gunluk_takip_ui_compact",
-      manualTasks: "gunluk_takip_manual_tasks_compact",
-      recurringTasks: "gunluk_takip_recurring_tasks_compact"
+      settings: "gunluk_takip_settings_compact_v2",
+      completions: "gunluk_takip_completions_compact_v2",
+      notes: "gunluk_takip_notes_compact_v2",
+      ui: "gunluk_takip_ui_compact_v2",
+      manualTasks: "gunluk_takip_manual_tasks_compact_v2",
+      recurringTasks: "gunluk_takip_recurring_tasks_compact_v2"
     };
 
     const DEFAULT_SETTINGS = {
@@ -677,10 +671,6 @@
       return dt.toISOString().slice(0,10);
     }
 
-    function diffDays(aISO, bISO) {
-      return Math.floor((parseLocalDate(bISO) - parseLocalDate(aISO)) / 86400000);
-    }
-
     function formatDateTR(iso) {
       return parseLocalDate(iso).toLocaleDateString("tr-TR", {
         weekday:"long",
@@ -723,8 +713,9 @@
       return state.recurringTasks || [];
     }
 
-    function addTask(title, type, dateISO) {
+    function addTask(title, type, dateISO, linkValue) {
       const trimmed = title.trim();
+      const link = (linkValue || "").trim();
       if (!trimmed) return;
 
       if (type === "daily") {
@@ -733,7 +724,8 @@
           title: trimmed,
           type: "manual-recurring",
           description: "",
-          badges: ["Her gün"]
+          badges: ["Her gün"],
+          link
         });
         saveJSON(STORAGE_KEYS.recurringTasks, state.recurringTasks);
       } else {
@@ -743,7 +735,8 @@
           title: trimmed,
           type: "manual",
           description: "",
-          badges: ["Tek gün"]
+          badges: ["Tek gün"],
+          link
         });
         saveJSON(STORAGE_KEYS.manualTasks, state.manualTasks);
       }
@@ -779,14 +772,7 @@
 
       if (doneTodayId) {
         const current = DELFT_SERIES.find(x => x.id === doneTodayId);
-        return {
-          id: current.id,
-          type: "listen",
-          title: current.title,
-          description: "Haftalık",
-          link: current.link,
-          badges: ["Delft", current.label]
-        };
+        return { ...current, type:"listen", badges:["Delft", current.label] };
       }
 
       const alreadyDoneEarlierThisWeek = Object.keys(state.completions).some(date => {
@@ -801,23 +787,13 @@
       let totalDone = 0;
       for (const date in state.completions) {
         for (const taskId in state.completions[date]) {
-          if (state.completions[date][taskId] && taskId.startsWith("delft-")) {
-            totalDone++;
-          }
+          if (state.completions[date][taskId] && taskId.startsWith("delft-")) totalDone++;
         }
       }
 
       const idx = totalDone % DELFT_SERIES.length;
       const selected = DELFT_SERIES[idx];
-
-      return {
-        id: selected.id,
-        type: "listen",
-        title: selected.title,
-        description: "Haftalık",
-        link: selected.link,
-        badges: ["Delft", selected.label]
-      };
+      return { ...selected, type:"listen", badges:["Delft", selected.label] };
     }
 
     function getWeeklyCarryTask(taskBaseId, title, link, desiredDateISO, weekdayIndex) {
@@ -902,43 +878,19 @@
       const day = parseLocalDate(dateISO).getDay();
 
       tasks.push(
-        {
-          id: "routine-walk",
-          type: "daily",
-          title: "Fullbody yada yürüyüşe çık",
-          description: "",
-          badges: ["Günlük","Rutin"]
-        },
-        {
-          id: "routine-film",
-          type: "daily",
-          title: "Film izle",
-          description: "",
-          badges: ["Günlük","Rutin"]
-        },
-        {
-          id: "routine-twitter",
-          type: "daily",
-          title: "Twitter süresini kısalt",
-          description: "",
-          badges: ["Günlük","Rutin"]
-        },
-        {
-          id: "routine-phone",
-          type: "daily",
-          title: "Telefonu 22.30'da bırak",
-          description: "",
-          badges: ["Günlük","Rutin"]
-        }
+        { id:"routine-walk", type:"daily", title:"Fullbody yada yürüyüşe çık", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-film", type:"daily", title:"Film izle", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-twitter", type:"daily", title:"Twitter süresini kısalt", description:"", badges:["Günlük","Rutin"] },
+        { id:"routine-phone", type:"daily", title:"Telefonu 22.30'da bırak", description:"", badges:["Günlük","Rutin"] }
       );
 
       if (day === 5 || day === 6 || day === 0) {
         tasks.push({
-          id: "routine-instagram-repeat",
-          type: "daily",
-          title: "Instagram tekrar",
-          description: "",
-          badges: ["Hafta sonu"]
+          id:"routine-instagram-repeat",
+          type:"daily",
+          title:"Instagram tekrar",
+          description:"",
+          badges:["Hafta sonu"]
         });
       }
 
@@ -1063,7 +1015,6 @@
       document.getElementById("statTotal").textContent = total;
       document.getElementById("statDone").textContent = done;
       document.getElementById("statLeft").textContent = total - done;
-
       document.getElementById("dailyNote").value = state.notes[dateISO] || "";
     }
 
@@ -1163,7 +1114,7 @@
       }
 
       if (!FIXED_REPORT_EMAIL || FIXED_REPORT_EMAIL.includes("REDACTED")) {
-        status.textContent = "Önce kod içindeki sabit mail adresini yaz";
+        status.textContent = "Önce sabit mail adresini gir";
         status.className = "tiny-note danger";
         return;
       }
@@ -1220,11 +1171,13 @@
     document.getElementById("addManualTaskBtn").addEventListener("click", () => {
       const input = document.getElementById("manualTaskInput");
       const type = document.getElementById("manualTaskType").value;
+      const link = document.getElementById("manualTaskLink").value;
       const value = input.value.trim();
       if (!value) return;
 
-      addTask(value, type, state.selectedDate);
+      addTask(value, type, state.selectedDate, link);
       input.value = "";
+      document.getElementById("manualTaskLink").value = "";
       document.getElementById("manualTaskType").value = "once";
       renderAll();
     });
@@ -1252,12 +1205,10 @@
       state.settings.userName = document.getElementById("userName").value.trim();
       state.settings.b2Frequency = Number(document.getElementById("b2Frequency").value || 1);
       saveJSON(STORAGE_KEYS.settings, state.settings);
-
       const status = document.getElementById("settingsStatus");
       status.textContent = "Ayarlar kaydedildi";
       status.className = "tiny-note ok";
       renderAll();
-
       setTimeout(() => {
         status.textContent = "";
         status.className = "tiny-note";
@@ -1274,4 +1225,3 @@
   </script>
 </body>
 </html>
-``` 
