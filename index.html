@@ -133,10 +133,32 @@
   .toast.show{opacity:1;}
   .text-sm{font-size:12px;color:var(--text3);}
   #monthCalendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-  @media(max-width:480px){
-    .add-row{flex-direction:column;}
-    .add-row input,.add-row select,.add-row .btn{width:100%;}
-  }
+  /* compact add */
+  .add-compact{margin-top:10px;}
+  .ac-row1{display:flex;gap:6px;margin-bottom:6px;}
+  .ac-row1 input{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;outline:none;}
+  .ac-row1 input:focus{border-color:var(--accent);}
+  .ac-row2{display:flex;gap:6px;}
+  .ac-row2 input{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:12px;outline:none;}
+  .ac-row2 input:focus{border-color:var(--accent);}
+  .ac-row2 select{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 8px;border-radius:8px;font-size:12px;outline:none;min-width:90px;}
+  .btn-xs{padding:8px 14px;font-size:16px;font-weight:700;border-radius:8px;flex-shrink:0;}
+  /* study edit modal */
+  .edit-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;}
+  .edit-series-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+  .edit-series-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .edit-series-title{font-size:13px;font-weight:600;}
+  .edit-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;margin-bottom:6px;}
+  .edit-input:focus{border-color:var(--accent);}
+  .edit-step{display:flex;gap:6px;align-items:center;margin-bottom:5px;}
+  .edit-step input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:11px;outline:none;}
+  .edit-step input:focus{border-color:var(--accent);}
+  .step-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;}
+  .step-del:hover{color:var(--danger);}
+  .add-step-btn{font-size:11px;color:var(--accent);background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:5px;padding:4px 10px;cursor:pointer;width:100%;margin-top:2px;}
+  .add-step-btn:hover{background:rgba(108,99,255,0.2);}
+  .series-interval{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text3);}
+  .series-interval select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:5px;font-size:11px;outline:none;}
 </style>
 </head>
 <body>
@@ -172,23 +194,27 @@
   </div>
   <div class="card">
     <div class="card-title">📌 Görevler</div>
+    <div class="task-section" id="dailySection" style="display:none">
+      <div class="section-label">Sadece bugün</div>
+      <div id="dailyTasks"></div>
+    </div>
     <div class="task-section">
       <div class="section-label">Her gün</div>
       <div id="everydayTasks"></div>
     </div>
-    <div class="task-section" id="studySection">
+    <div class="task-section" id="studySection" style="display:none">
       <div class="section-label">📚 Çalışma planı</div>
       <div id="studyTasks"></div>
     </div>
-    <div class="task-section">
-      <div class="section-label">Sadece bugün</div>
-      <div id="dailyTasks"></div>
-    </div>
-    <div class="add-row">
-      <input type="text" id="newName" placeholder="Yeni görev..." onkeydown="if(event.key==='Enter')addTask()">
-      <input type="url" id="newLink" class="link-i" placeholder="Link (opsiyonel)">
-      <select id="newType"><option value="everyday">Her gün</option><option value="daily">Sadece bugün</option></select>
-      <button class="btn btn-primary" onclick="addTask()">+ Ekle</button>
+    <div class="add-compact">
+      <div class="ac-row1">
+        <input type="text" id="newName" placeholder="Yeni görev..." onkeydown="if(event.key==='Enter')addTask()">
+        <button class="btn btn-primary btn-xs" onclick="addTask()">+</button>
+      </div>
+      <div class="ac-row2">
+        <input type="url" id="newLink" placeholder="Link (opsiyonel)">
+        <select id="newType"><option value="daily">Bugün</option><option value="everyday">Her gün</option></select>
+      </div>
     </div>
   </div>
   <div class="card">
@@ -219,6 +245,9 @@
 
 <!-- STUDY -->
 <div class="page" id="page-study">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button class="btn btn-ghost btn-sm" onclick="openSeriesMgr()">✏️ Serileri Düzenle</button>
+  </div>
   <div class="card">
     <div class="card-title">🔤 Kelime listesi <span class="text-sm" style="margin-left:4px;text-transform:none;font-weight:400;">haftada 1 kez</span></div>
     <div id="study_word"></div>
@@ -394,13 +423,13 @@ function studyTasksToday(){
 // GÖREV TANIMLARI (manuel)
 // ═══════════════════════════════════════════════════
 const DEFAULT_TASKS = [
-  { id:'sport',   name:'🏋️ Fullbody veya yürüyüşe çık', type:'everyday', link:'', order:0 },
+  { id:'sport',   name:'🏋️ Fullbody veya yürüyüş', type:'everyday', link:'', order:0 },
   { id:'film',    name:'🎬 Film izle',                    type:'everyday', link:'', order:1 },
   { id:'twitter', name:'🐦 Twitter süresini kısalt',      type:'everyday', link:'', order:2 },
-  { id:'phone',   name:'📵 Telefonu 22:30\'da bırak',     type:'everyday', link:'', order:3 },
+  { id:'phone',   name:'📵 Telefon 22:30\'da son',     type:'everyday', link:'', order:3 },
   { id:'call',    name:'📞 Birini ara veya mesaj at',      type:'everyday', link:'', order:4 },
-  { id:'zikir',   name:'📿 Günlük zikirler',              type:'everyday', link:'', order:5 },
-  { id:'quran',   name:'📖 Kuran oku',                    type:'everyday', link:'', order:6 },
+  { id:'quran',   name:'📖 Kuran oku',                    type:'everyday', link:'', order:5 },
+  { id:'insta',   name:'📿 Günlük zikirler',                    type:'everyday', link:'https://drive.google.com/file/d/1q_4w_YGpe9CfSNLHkVShJNlBLUebgEoB/view?usp=drive_link', order:6 },
   { id:'insta',   name:'📱 Instagram',                    type:'everyday', link:'https://www.instagram.com/your_activity/interactions/likes', order:7 }
 ];
 
@@ -450,6 +479,7 @@ function renderDaily(){
 
   // Çalışma planı bölümünü her zaman göster ama içi boşsa gizle
   document.getElementById('studySection').style.display = study.length>0?'block':'none';
+  document.getElementById('dailySection').style.display = daily.length>0?'block':'none';
 
   updateSummary(ds,dayData);
   document.getElementById('noteArea').value = dayData.note||'';
@@ -752,8 +782,188 @@ function showToast(msg){
     }catch(e){}
     oldKeys.forEach(k=>localStorage.removeItem(k));
   }
+  loadCustomSeries();
   renderDaily();
 })();
+
+// ═══════════════════════════════════════════════════
+// SERİ DÜZENLE
+// ═══════════════════════════════════════════════════
+
+// Custom series override stored in localStorage
+// getCustomSeries() returns the live SERIES object (default + user edits)
+function getCustomSeries(){
+  try{
+    const stored = localStorage.getItem('gcustom');
+    if(stored) return JSON.parse(stored);
+  }catch(e){}
+  // Return a deep clone of SERIES defaults
+  return JSON.parse(JSON.stringify(SERIES));
+}
+function setCustomSeries(s){ localStorage.setItem('gcustom', JSON.stringify(s)); }
+
+// Override SERIES with custom data on load
+function loadCustomSeries(){
+  const cs = getCustomSeries();
+  // Merge: keep default structure but allow user overrides
+  SK.forEach(k=>{ if(cs[k]) SERIES[k]=cs[k]; });
+  // Also load any extra series added by user
+  Object.keys(cs).forEach(k=>{ if(!SERIES[k]){ SERIES[k]=cs[k]; SK.push(k); } });
+}
+
+let editingKey = null;
+
+function openSeriesMgr(){
+  const body = document.getElementById('seriesMgrBody');
+  body.innerHTML='';
+  Object.keys(SERIES).forEach(k=>{
+    const s = SERIES[k];
+    const div = document.createElement('div');
+    div.className='edit-series-item';
+    div.innerHTML=
+      '<div class="edit-series-header">'+
+        '<div class="edit-series-title">'+s.label+'</div>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="openSeriesEdit(''+k+'')">✏️ Düzenle</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="text-sm">'+s.steps.length+' adım</div>';
+    body.appendChild(div);
+  });
+  document.getElementById('seriesMgrOv').classList.add('show');
+}
+
+function addNewSeries(){
+  const key = 'custom_'+Date.now();
+  SERIES[key] = { label:'🆕 Yeni Seri', steps:[{title:'Adım 1', link:'', interval:1}] };
+  SK.push(key);
+  const cs = getCustomSeries();
+  cs[key] = SERIES[key];
+  setCustomSeries(cs);
+  document.getElementById('seriesMgrOv').classList.remove('show');
+  openSeriesEdit(key);
+}
+
+function openSeriesEdit(k){
+  editingKey = k;
+  const s = SERIES[k];
+  document.getElementById('studyEditTitle').textContent = 'Seriyi Düzenle';
+  const body = document.getElementById('studyEditBody');
+  body.innerHTML='';
+
+  // Label
+  const lbl = document.createElement('div');
+  lbl.innerHTML='<div class="text-sm" style="margin-bottom:4px;">Seri adı</div>'+
+    '<input class="edit-input" id="editLabel" value="'+s.label.replace(/"/g,'&quot;')+'">';
+  body.appendChild(lbl);
+
+  // Interval
+  const intv = document.createElement('div');
+  intv.className='series-interval';
+  intv.innerHTML='Her kaç günde bir: <select id="editInterval">'+
+    '<option value="1" '+((!s.interval||s.interval===1)?'selected':'')+'>Her gün</option>'+
+    '<option value="2" '+(s.interval===2?'selected':'')+'>2 günde bir</option>'+
+    '<option value="7" '+(s.interval===7?'selected':'')+'>Haftada bir</option>'+
+    '</select>';
+  body.appendChild(intv);
+
+  // Steps
+  const stepsDiv = document.createElement('div');
+  stepsDiv.id='editSteps';
+  stepsDiv.innerHTML='<div class="text-sm" style="margin:8px 0 6px;">Adımlar</div>';
+  s.steps.forEach((step,i)=>{
+    stepsDiv.appendChild(makeStepRow(step,i));
+  });
+  body.appendChild(stepsDiv);
+
+  // Add step button
+  const addBtn = document.createElement('button');
+  addBtn.className='add-step-btn';
+  addBtn.textContent='+ Adım Ekle';
+  addBtn.onclick=()=>{
+    const sd=document.getElementById('editSteps');
+    const count=sd.querySelectorAll('.edit-step').length;
+    sd.insertBefore(makeStepRow({title:'',link:''},count), addBtn.parentNode?null:sd.lastChild);
+    sd.appendChild(addBtn);
+  };
+  body.appendChild(addBtn);
+
+  document.getElementById('studyEditOv').classList.add('show');
+}
+
+function makeStepRow(step, i){
+  const div=document.createElement('div');
+  div.className='edit-step';
+  div.innerHTML=
+    '<div style="flex:1;display:flex;flex-direction:column;gap:3px;">'+
+      '<input placeholder="Adım adı..." value="'+step.title.replace(/"/g,'&quot;')+'">'+
+      '<input placeholder="Link (opsiyonel)..." value="'+(step.link||'').replace(/"/g,'&quot;')+'">'+
+    '</div>'+
+    '<button class="step-del" onclick="this.parentNode.remove()">🗑</button>';
+  return div;
+}
+
+function saveStudyEdit(){
+  if(!editingKey) return;
+  const label    = document.getElementById('editLabel').value.trim()||'Seri';
+  const interval = parseInt(document.getElementById('editInterval').value)||1;
+  const stepRows = document.getElementById('editSteps').querySelectorAll('.edit-step');
+  const steps=[];
+  stepRows.forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const title=(inputs[0]?.value||'').trim();
+    const link =(inputs[1]?.value||'').trim();
+    if(title) steps.push({title,link,interval});
+  });
+  if(!steps.length){showToast('En az 1 adım gerekli');return;}
+
+  SERIES[editingKey] = { label, interval, steps };
+  if(!SK.includes(editingKey)) SK.push(editingKey);
+
+  // Persist
+  const cs=getCustomSeries();
+  cs[editingKey]=SERIES[editingKey];
+  setCustomSeries(cs);
+
+  closeStudyEdit();
+  renderStudy();
+  renderDaily();
+  showToast('Kaydedildi ✓');
+}
+
+function closeStudyEdit(){
+  document.getElementById('studyEditOv').classList.remove('show');
+  editingKey=null;
+}
+
 </script>
+
+<!-- STUDY EDIT MODAL -->
+<div class="modal-ov" id="studyEditOv">
+  <div class="edit-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="studyEditTitle">Seriyi Düzenle</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeStudyEdit()">✕ Kapat</button>
+    </div>
+    <div id="studyEditBody"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary btn-sm" onclick="saveStudyEdit()">Kaydet</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeStudyEdit()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERIES MANAGER (full list) -->
+<div class="modal-ov" id="seriesMgrOv">
+  <div class="edit-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3>Çalışma Serileri</h3>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('seriesMgrOv').classList.remove('show')">✕</button>
+    </div>
+    <div id="seriesMgrBody"></div>
+    <button class="btn btn-primary btn-sm" style="margin-top:12px;width:100%;" onclick="addNewSeries()">+ Yeni Seri Ekle</button>
+  </div>
+</div>
+
 </body>
 </html>
