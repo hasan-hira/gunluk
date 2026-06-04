@@ -282,7 +282,10 @@ const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','A
 
 let viewDate = new Date(); viewDate.setHours(0,0,0,0);
 
-function dk(d){ return d.toISOString().split('T')[0]; }
+function dk(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
 function todayStr(){ return dk(new Date()); }
 
 // ═══════════════════════════════════════════════════
@@ -338,13 +341,16 @@ function activeStep(k){
 }
 
 // Bugün bu seri gösterilmeli mi?
-// EVET: hiç yapılmamış, VEYA bugün yapılmış (tamamlandı olarak), VEYA interval geçmiş
+// Kelime/Delftse/Taal: her gün bir adım (interval=1), haftada bir tur
+// B2: 2 günde bir adım (interval=2)
+// EVET: hiç yapılmamış, VEYA bugün yapılmış, VEYA son yapılıştan >= interval gün geçmiş
 function seriesDue(k){
   const s = getSS()[k];
-  if(!s||!s.lastDone) return true;          // hiç yapılmamış
-  if(s.lastDone === todayStr()) return true; // bugün tamamlandı (göster ama ✓ olarak)
+  if(!s||!s.lastDone) return true;
+  if(s.lastDone === todayStr()) return true;
   const diff = Math.round((new Date()-new Date(s.lastDone))/86400000);
-  return diff >= activeStep(k).step.interval;
+  const interval = k==='b2' ? 2 : 1;
+  return diff >= interval;
 }
 
 function doneToday(k){ const s=getSS()[k]; return s&&s.lastDone===todayStr(); }
@@ -388,7 +394,7 @@ function studyTasksToday(){
 // GÖREV TANIMLARI (manuel)
 // ═══════════════════════════════════════════════════
 const DEFAULT_TASKS = [
-  { id:'sport',   name:'🏋️ Fullbody veya yürüyüş', type:'everyday', link:'', order:0 },
+  { id:'sport',   name:'🏋️ Fullbody veya yürüyüşe çık', type:'everyday', link:'', order:0 },
   { id:'film',    name:'🎬 Film izle',                    type:'everyday', link:'', order:1 },
   { id:'twitter', name:'🐦 Twitter süresini kısalt',      type:'everyday', link:'', order:2 },
   { id:'phone',   name:'📵 Telefonu 22:30\'da bırak',     type:'everyday', link:'', order:3 },
@@ -443,7 +449,7 @@ function renderDaily(){
   renderList('dailyTasks',    daily,    dayData.tasks, ds, false);
 
   // Çalışma planı bölümünü her zaman göster ama içi boşsa gizle
-  document.getElementById('studySection').style.display = (isToday&&study.length>0)?'block':'none';
+  document.getElementById('studySection').style.display = study.length>0?'block':'none';
 
   updateSummary(ds,dayData);
   document.getElementById('noteArea').value = dayData.note||'';
